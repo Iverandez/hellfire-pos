@@ -4,9 +4,10 @@ import { supabase } from './supabase'
 export default function Login({ onLogin }) {
 
   const [email, setEmail] = useState('')
+
   const [password, setPassword] = useState('')
 
-  async function signIn() {
+  async function login() {
 
     const { data, error } =
       await supabase.auth.signInWithPassword({
@@ -52,7 +53,7 @@ export default function Login({ onLogin }) {
         />
 
         <button
-          onClick={signIn}
+          onClick={login}
           className="w-full bg-pink-500 hover:bg-pink-600 py-4 rounded-2xl text-2xl font-black"
         >
           Entrar

@@ -1,10 +1,18 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
+import Login from './Login'
+import { supabase } from './supabase'
 
 export default function App() {
 
   const qrRef = useRef()
+
+  const [user, setUser] = useState(null)
+
+  const [showQR, setShowQR] = useState(false)
+
+  const [salesHistory, setSalesHistory] = useState([])
 
   const products = [
     { id: 1, name: 'Cerveza', price: 80 },
@@ -28,7 +36,38 @@ export default function App() {
 
   const [selectedTable, setSelectedTable] = useState(null)
 
-  const [showQR, setShowQR] = useState(false)
+  useEffect(() => {
+
+    checkUser()
+
+    loadSales()
+
+  }, [])
+
+  async function checkUser() {
+
+    const { data } =
+      await supabase.auth.getUser()
+
+    if (data.user) {
+
+      setUser(data.user)
+    }
+  }
+
+  async function loadSales() {
+
+    const { data, error } =
+      await supabase
+        .from('sales')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (!error) {
+
+      setSalesHistory(data)
+    }
+  }
 
   function selectTable(table) {
 
@@ -56,9 +95,10 @@ export default function App() {
 
     setTables(updatedTables)
 
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
+    const updatedSelected =
+      updatedTables.find(
+        table => table.id === selectedTable.id
+      )
 
     setSelectedTable(updatedSelected)
   }
@@ -84,9 +124,10 @@ export default function App() {
 
     setTables(updatedTables)
 
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
+    const updatedSelected =
+      updatedTables.find(
+        table => table.id === selectedTable.id
+      )
 
     setSelectedTable(updatedSelected)
   }
@@ -99,9 +140,12 @@ export default function App() {
     )
   }
 
-  function payTable(method) {
+  async function payTable(method) {
 
     if (!selectedTable) return
+
+    const total =
+      getTotal(selectedTable.items)
 
     const updatedTables = tables.map(table => {
 
@@ -119,28 +163,52 @@ export default function App() {
 
     setTables(updatedTables)
 
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
+    const updatedSelected =
+      updatedTables.find(
+        table => table.id === selectedTable.id
+      )
 
     setSelectedTable(updatedSelected)
 
     setShowQR(true)
+
+    await supabase
+      .from('sales')
+      .insert([
+        {
+          customer: selectedTable.number,
+          total: total,
+          payment_method: method,
+          employee: user.email,
+        }
+      ])
+
+    loadSales()
   }
 
   async function downloadQR() {
 
     if (!qrRef.current) return
 
-    const dataUrl = await toPng(qrRef.current)
+    const dataUrl =
+      await toPng(qrRef.current)
 
-    const link = document.createElement('a')
+    const link =
+      document.createElement('a')
 
-    link.download = `HELLFIRE-CLIENTE-${selectedTable.number}.png`
+    link.download =
+      `HELLFIRE-${selectedTable.number}.png`
 
     link.href = dataUrl
 
     link.click()
+  }
+
+  async function logout() {
+
+    await supabase.auth.signOut()
+
+    setUser(null)
   }
 
   const qrData = selectedTable
@@ -153,15 +221,39 @@ Estado: PAGADO
 `
     : ''
 
+  if (!user) {
+
+    return <Login onLogin={setUser} />
+  }
+
   return (
 
     <div className="min-h-screen bg-black text-white p-6">
 
-      <h1 className="text-6xl font-black text-center text-pink-500 mb-10">
-        HELLFIRE POS
-      </h1>
+      <div className="flex justify-between items-center mb-10">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+
+          <h1 className="text-6xl font-black text-pink-500">
+            HELLFIRE POS
+          </h1>
+
+          <p className="text-zinc-400 mt-2">
+            Usuario: {user.email}
+          </p>
+
+        </div>
+
+        <button
+          onClick={logout}
+          className="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-2xl font-black"
+        >
+          Cerrar Sesión
+        </button>
+
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
 
         {/* CLIENTES */}
 
@@ -387,7 +479,7 @@ Estado: PAGADO
                         onClick={downloadQR}
                         className="mt-5 bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-2xl font-black"
                       >
-                        Descargar QR Imagen
+                        Descargar QR
                       </button>
 
                     </div>
@@ -399,6 +491,53 @@ Estado: PAGADO
               </>
 
             )}
+
+          </div>
+
+        </div>
+
+        {/* HISTORIAL */}
+
+        <div>
+
+          <h2 className="text-3xl font-bold mb-5">
+            Ventas
+          </h2>
+
+          <div className="bg-zinc-900 rounded-2xl p-5 h-[700px] overflow-y-scroll">
+
+            {salesHistory.map((sale, index) => (
+
+              <div
+                key={index}
+                className="border-b border-zinc-700 py-4"
+              >
+
+                <h3 className="text-xl font-black text-pink-500">
+                  Cliente #{sale.customer}
+                </h3>
+
+                <p>
+                  ${sale.total}
+                </p>
+
+                <p className="text-green-400">
+                  {sale.payment_method}
+                </p>
+
+                <p className="text-zinc-400 text-sm">
+                  {sale.employee}
+                </p>
+
+                <p className="text-zinc-500 text-xs">
+                  {new Date(
+                    sale.created_at
+                  ).toLocaleString()}
+                </p>
+
+              </div>
+
+            ))}
 
           </div>
 
