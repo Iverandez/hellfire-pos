@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HELLFIRE</string>
+    <string name="title_activity_main">HELLFIRE</string>
+    <string name="package_name">HELLFIRE.APP</string>
+    <string name="custom_url_scheme">HELLFIRE.APP</string>
+</resources>
