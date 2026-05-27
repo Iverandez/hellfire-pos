@@ -1,18 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
-const products = [
-
-  { id:1, name:'Entrada', price:100 },
-
-  { id:2, name:'Barra Libre', price:300 },
-
-  { id:3, name:'Cerveza', price:80 },
-
-  { id:4, name:'Sky', price:50 },
-
-]
-
 export default function App() {
 
   const [orders, setOrders] = useState([])
@@ -22,29 +10,41 @@ export default function App() {
 
   const [cart, setCart] = useState([])
 
+  const products = [
+
+    { id:1, name:'Entrada', price: 100 },
+    { id:2, name:'Barra Libre', price: 300 },
+    { id:3, name:'Cerveza', price:60 },
+    { id:4, name:'Caribe', price: 75 },
+    { id:5, name:'Sky', price: 80 },
+    { id:6, name:'Cigarros', price: 10 },
+    { id:7, name:'Agua', price: 60 },
+
+  ]
+
   useEffect(()=>{
 
     fetchOrders()
 
-    const channel = supabase
+    const channel =
+      supabase
+        .channel('orders')
 
-      .channel('orders-live')
+        .on(
+          'postgres_changes',
+          {
+            event:'*',
+            schema:'public',
+            table:'orders'
+          },
+          ()=>{
 
-      .on(
-        'postgres_changes',
-        {
-          event:'*',
-          schema:'public',
-          table:'orders'
-        },
-        ()=>{
+            fetchOrders()
 
-          fetchOrders()
+          }
+        )
 
-        }
-      )
-
-      .subscribe()
+        .subscribe()
 
     return ()=>{
 
@@ -56,25 +56,21 @@ export default function App() {
 
   async function fetchOrders(){
 
-    const { data } = await supabase
-
-      .from('orders')
-
-      .select('*')
-
-      .order('id',{ ascending:false })
+    const { data } =
+      await supabase
+        .from('orders')
+        .select('*')
+        .order('id',{ ascending:false })
 
     setOrders(data || [])
-
   }
 
   function addProduct(product){
 
-    setCart(prev=>[
-      ...prev,
+    setCart([
+      ...cart,
       product
     ])
-
   }
 
   function removeProduct(index){
@@ -84,85 +80,35 @@ export default function App() {
     updated.splice(index,1)
 
     setCart(updated)
-
   }
 
-  const total = cart.reduce(
-
-    (acc,item)=>acc + item.price,
-
-    0
-
-  )
+  const total =
+    cart.reduce(
+      (acc,item)=>acc + item.price,
+      0
+    )
 
   async function pay(method){
 
-    try {
+    if(!selectedCustomer) return
 
-      if(!selectedCustomer){
+    await supabase
+      .from('orders')
+      .insert([{
 
-        alert('Selecciona cliente')
-
-        return
-
-      }
-
-      if(cart.length===0){
-
-        alert('Agrega productos')
-
-        return
-
-      }
-
-      const orderData = {
-
-        customer_number:Number(selectedCustomer),
+        customer_number:selectedCustomer,
 
         items:cart,
 
-        total:Number(total),
+        total,
 
-        payment_method:String(method),
+        payment_method:method,
 
         paid:true
 
-      }
+      }])
 
-      const { data, error } = await supabase
-
-        .from('orders')
-
-        .insert([orderData])
-
-        .select()
-
-      if(error){
-
-        console.log(error)
-
-        alert(error.message)
-
-        return
-
-      }
-
-      console.log(data)
-
-      alert('Pago realizado')
-
-      setCart([])
-
-    }
-
-    catch(err){
-
-      console.log(err)
-
-      alert(err.message)
-
-    }
-
+    setCart([])
   }
 
   return (
@@ -170,15 +116,14 @@ export default function App() {
     <div
       style={{
         minHeight:'100vh',
-        background:'#000',
+        background:'black',
         color:'white',
-        padding:'20px'
+        padding:20
       }}
     >
 
       <h1
         style={{
-          fontSize:'50px',
           color:'#ff0080'
         }}
       >
@@ -191,32 +136,20 @@ export default function App() {
 
       <div
         style={{
-
           display:'grid',
-
           gridTemplateColumns:
-            'repeat(10,1fr)',
-
-          gap:'10px',
-
-          maxHeight:'300px',
-
-          overflowY:'scroll'
-
+            'repeat(5,1fr)',
+          gap:10
         }}
       >
 
         {
-
           Array.from(
-            { length:1000 },
+            { length:20 },
             (_,i)=>i+1
-          )
-
-          .map(number=>(
+          ).map(number=>(
 
             <button
-
               key={number}
 
               onClick={()=>
@@ -225,35 +158,31 @@ export default function App() {
 
               style={{
 
-                padding:'15px',
-
-                border:'none',
-
-                borderRadius:'10px',
+                padding:20,
 
                 background:
                   selectedCustomer===number
                   ? '#ff0080'
-                  : '#111',
+                  : '#222',
 
-                color:'white'
+                color:'white',
 
+                border:'none',
+
+                borderRadius:10
               }}
             >
-
               {number}
-
             </button>
 
           ))
-
         }
 
       </div>
 
       <h2
         style={{
-          marginTop:'30px'
+          marginTop:30
         }}
       >
         Productos
@@ -262,17 +191,15 @@ export default function App() {
       <div
         style={{
           display:'flex',
-          gap:'10px',
+          gap:10,
           flexWrap:'wrap'
         }}
       >
 
         {
-
           products.map(product=>(
 
             <button
-
               key={product.id}
 
               onClick={()=>
@@ -281,6 +208,8 @@ export default function App() {
 
               style={{
 
+                padding:20,
+
                 background:'#111',
 
                 color:'white',
@@ -288,57 +217,42 @@ export default function App() {
                 border:
                   '1px solid #ff0080',
 
-                borderRadius:'10px',
-
-                padding:'20px'
-
+                borderRadius:10
               }}
             >
-
               {product.name}
 
               <br/>
 
               ${product.price}
-
             </button>
 
           ))
-
         }
 
       </div>
 
       <h2
         style={{
-          marginTop:'30px'
+          marginTop:30
         }}
       >
-        Cliente #{selectedCustomer}
+        Consumo Cliente #{selectedCustomer}
       </h2>
 
       {
-
         cart.map((item,index)=>(
 
           <div
-
             key={index}
 
             style={{
-
               display:'flex',
-
               justifyContent:'space-between',
-
               background:'#111',
-
-              padding:'15px',
-
-              borderRadius:'10px',
-
-              marginTop:'10px'
-
+              padding:10,
+              marginTop:10,
+              borderRadius:10
             }}
           >
 
@@ -357,11 +271,11 @@ export default function App() {
                 }
 
                 style={{
-                  marginLeft:'10px',
+                  marginLeft:10,
                   background:'red',
                   color:'white',
                   border:'none',
-                  borderRadius:'5px'
+                  borderRadius:5
                 }}
               >
                 X
@@ -372,13 +286,11 @@ export default function App() {
           </div>
 
         ))
-
       }
 
       <h1
         style={{
-          marginTop:'20px',
-          color:'#00ff99'
+          marginTop:20
         }}
       >
         TOTAL: ${total}
@@ -387,7 +299,7 @@ export default function App() {
       <div
         style={{
           display:'flex',
-          gap:'10px'
+          gap:10
         }}
       >
 
@@ -413,30 +325,23 @@ export default function App() {
 
       <h2
         style={{
-          marginTop:'40px'
+          marginTop:40
         }}
       >
         Ventas Tiempo Real
       </h2>
 
       {
-
         orders.map(order=>(
 
           <div
-
             key={order.id}
 
             style={{
-
               background:'#111',
-
-              padding:'20px',
-
-              borderRadius:'10px',
-
-              marginTop:'10px'
-
+              padding:20,
+              marginTop:10,
+              borderRadius:10
             }}
           >
 
@@ -450,17 +355,14 @@ export default function App() {
 
             <br/>
 
-            Método:
+            Pago:
             {order.payment_method}
 
           </div>
 
         ))
-
       }
 
     </div>
-
   )
-
 }
