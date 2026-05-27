@@ -37,6 +37,8 @@ export default function App() {
   const [customerCarts, setCustomerCarts] =
     useState({})
 
+  const [tab, setTab] = useState('clientes')
+
   useEffect(()=>{
 
     fetchOrders()
@@ -172,6 +174,8 @@ export default function App() {
 
     if(error){
 
+      console.log(error)
+
       alert(error.message)
 
       return
@@ -197,250 +201,533 @@ export default function App() {
         minHeight:'100vh',
         background:'#050505',
         color:'white',
-        padding:'20px',
-        fontFamily:'Arial'
+        fontFamily:'Arial',
+        paddingBottom:'140px'
       }}
     >
 
-      <h1
-        style={{
-          color:'#ff0080',
-          fontSize:'45px',
-          textAlign:'center'
-        }}
-      >
-        HELLFIRE POS
-      </h1>
-
-      <h2>
-        Cliente:
-        {' '}
-        {selectedCustomer || 'Ninguno'}
-      </h2>
-
       <div
         style={{
-
-          display:'grid',
-
-          gridTemplateColumns:
-            'repeat(5,1fr)',
-
-          gap:'10px',
-
-          maxHeight:'300px',
-
-          overflowY:'scroll'
-
+          padding:'20px'
         }}
       >
 
-        {
+        <h1
+          style={{
 
-          Array.from(
-            { length:1000 },
-            (_,i)=>i+1
-          )
+            textAlign:'center',
 
-          .map(number=>(
+            fontSize:'45px',
 
-            <button
+            marginBottom:'20px',
 
-              key={number}
+            background:
+              'linear-gradient(90deg,#ff0080,#ff4d00,#8a2be2)',
 
-              onClick={()=>
-                setSelectedCustomer(number)
-              }
+            WebkitBackgroundClip:'text',
 
-              style={{
+            WebkitTextFillColor:'transparent'
 
-                padding:'15px',
+          }}
+        >
+          HELLFIRE POS
+        </h1>
 
-                border:'none',
+        <div
+          style={{
 
-                borderRadius:'10px',
+            display:'flex',
 
-                background:
-                  selectedCustomer===number
-                  ? '#ff0080'
-                  : '#111',
+            gap:'10px',
 
-                color:'white'
+            marginBottom:'25px'
 
-              }}
-            >
+          }}
+        >
 
-              {number}
-
-            </button>
-
-          ))
-
-        }
-
-      </div>
-
-      <h2
-        style={{
-          marginTop:'30px'
-        }}
-      >
-        Productos
-      </h2>
-
-      <div
-        style={{
-          display:'flex',
-          gap:'10px',
-          flexWrap:'wrap'
-        }}
-      >
-
-        {
-
-          products.map(product=>(
-
-            <button
-
-              key={product.id}
-
-              onClick={()=>
-                addProduct(product)
-              }
-
-              style={{
-
-                background:'#111',
-
-                border:
-                  '1px solid #ff0080',
-
-                color:'white',
-
-                padding:'20px',
-
-                borderRadius:'15px'
-
-              }}
-            >
-
-              {product.name}
-
-              <br/>
-
-              ${product.price}
-
-            </button>
-
-          ))
-
-        }
-
-      </div>
-
-      <h2
-        style={{
-          marginTop:'30px'
-        }}
-      >
-        Consumo
-      </h2>
-
-      {
-
-        currentCart.map((item,index)=>(
-
-          <div
-
-            key={index}
-
-            style={{
-
-              display:'flex',
-
-              justifyContent:'space-between',
-
-              background:'#111',
-
-              padding:'15px',
-
-              marginTop:'10px',
-
-              borderRadius:'10px'
-
-            }}
+          <button
+            onClick={()=>setTab('clientes')}
+            style={
+              tab==='clientes'
+              ? activeTab
+              : tabStyle
+            }
           >
+            Clientes
+          </button>
 
-            <span>
-              {item.name}
-            </span>
+          <button
+            onClick={()=>setTab('productos')}
+            style={
+              tab==='productos'
+              ? activeTab
+              : tabStyle
+            }
+          >
+            Productos
+          </button>
+
+          <button
+            onClick={()=>setTab('ventas')}
+            style={
+              tab==='ventas'
+              ? activeTab
+              : tabStyle
+            }
+          >
+            Ventas
+          </button>
+
+        </div>
+
+        {
+
+          tab==='clientes' && (
 
             <div>
 
-              ${item.price}
+              <h2>
+                Clientes
+              </h2>
 
-              <button
-
-                onClick={()=>
-                  removeProduct(index)
-                }
-
+              <div
                 style={{
-                  marginLeft:'10px',
-                  background:'red',
-                  border:'none',
-                  color:'white',
-                  borderRadius:'5px'
+
+                  display:'grid',
+
+                  gridTemplateColumns:
+                    'repeat(5,1fr)',
+
+                  gap:'10px',
+
+                  maxHeight:'500px',
+
+                  overflowY:'scroll'
+
                 }}
               >
-                X
-              </button>
+
+                {
+
+                  Array.from(
+                    { length:1000 },
+                    (_,i)=>i+1
+                  )
+
+                  .map(number=>(
+
+                    <button
+
+                      key={number}
+
+                      onClick={()=>
+                        setSelectedCustomer(number)
+                      }
+
+                      style={{
+
+                        padding:'20px',
+
+                        borderRadius:'15px',
+
+                        border:'none',
+
+                        cursor:'pointer',
+
+                        fontWeight:'bold',
+
+                        background:
+                          selectedCustomer===number
+                          ? '#ff0080'
+                          : '#111',
+
+                        color:'white'
+
+                      }}
+                    >
+
+                      Cliente {number}
+
+                      <br/>
+
+                      <small>
+
+                        ${
+                          (
+                            customerCarts[number] || []
+                          )
+
+                          .reduce(
+                            (acc,item)=>
+                              acc + item.price,
+                            0
+                          )
+                        }
+
+                      </small>
+
+                    </button>
+
+                  ))
+
+                }
+
+              </div>
 
             </div>
 
-          </div>
+          )
 
-        ))
+        }
 
-      }
+        {
 
-      <h1
-        style={{
-          color:'#00ff99'
-        }}
-      >
-        TOTAL: ${total}
-      </h1>
+          tab==='productos' && (
+
+            <div>
+
+              <h2>
+                Productos
+              </h2>
+
+              <div
+                style={{
+
+                  display:'grid',
+
+                  gridTemplateColumns:
+                    'repeat(auto-fit,minmax(150px,1fr))',
+
+                  gap:'15px'
+
+                }}
+              >
+
+                {
+
+                  products.map(product=>(
+
+                    <div
+
+                      key={product.id}
+
+                      style={{
+
+                        background:'#111',
+
+                        border:
+                          '1px solid #ff0080',
+
+                        borderRadius:'20px',
+
+                        padding:'20px',
+
+                        textAlign:'center'
+
+                      }}
+                    >
+
+                      <h3>
+                        {product.name}
+                      </h3>
+
+                      <p
+                        style={{
+                          color:'#00ff99',
+                          fontSize:'22px'
+                        }}
+                      >
+                        ${product.price}
+                      </p>
+
+                      <button
+
+                        onClick={()=>
+                          addProduct(product)
+                        }
+
+                        style={addButton}
+
+                      >
+
+                        Agregar
+
+                      </button>
+
+                    </div>
+
+                  ))
+
+                }
+
+              </div>
+
+            </div>
+
+          )
+
+        }
+
+        {
+
+          tab==='ventas' && (
+
+            <div>
+
+              <h2>
+                Ventas
+              </h2>
+
+              {
+
+                orders.map(order=>(
+
+                  <div
+
+                    key={order.id}
+
+                    style={{
+
+                      background:'#111',
+
+                      borderRadius:'15px',
+
+                      padding:'20px',
+
+                      marginBottom:'15px',
+
+                      border:
+                        '1px solid #ff0080'
+
+                    }}
+                  >
+
+                    <h3>
+                      Cliente #{order.customer_number}
+                    </h3>
+
+                    <p>
+                      Total:
+                      ${order.total}
+                    </p>
+
+                    <p>
+                      Método:
+                      {order.payment_method}
+                    </p>
+
+                  </div>
+
+                ))
+
+              }
+
+            </div>
+
+          )
+
+        }
+
+      </div>
 
       <div
         style={{
-          display:'flex',
-          gap:'10px'
+
+          position:'fixed',
+
+          bottom:0,
+
+          left:0,
+
+          right:0,
+
+          background:'#111',
+
+          padding:'20px',
+
+          borderTop:
+            '2px solid #ff0080'
+
         }}
       >
 
-        <button
-          onClick={()=>pay('Efectivo')}
-        >
-          Efectivo
-        </button>
+        <h2>
+          Cliente:
+          {' '}
+          {selectedCustomer || 'Ninguno'}
+        </h2>
 
-        <button
-          onClick={()=>pay('Tarjeta')}
-        >
-          Tarjeta
-        </button>
+        {
 
-        <button
-          onClick={()=>pay('Transferencia')}
+          currentCart.map((item,index)=>(
+
+            <div
+
+              key={index}
+
+              style={{
+
+                display:'flex',
+
+                justifyContent:'space-between',
+
+                marginBottom:'10px'
+
+              }}
+            >
+
+              <span>
+                {item.name}
+              </span>
+
+              <div>
+
+                ${item.price}
+
+                <button
+
+                  onClick={()=>
+                    removeProduct(index)
+                  }
+
+                  style={removeButton}
+
+                >
+                  X
+                </button>
+
+              </div>
+
+            </div>
+
+          ))
+
+        }
+
+        <h1
+          style={{
+            color:'#00ff99'
+          }}
         >
-          Transferencia
-        </button>
+          TOTAL: ${total}
+        </h1>
+
+        <div
+          style={{
+            display:'flex',
+            gap:'10px'
+          }}
+        >
+
+          <button
+            onClick={()=>pay('Efectivo')}
+            style={payButton}
+          >
+            Efectivo
+          </button>
+
+          <button
+            onClick={()=>pay('Tarjeta')}
+            style={payButton}
+          >
+            Tarjeta
+          </button>
+
+          <button
+            onClick={()=>pay('Transferencia')}
+            style={payButton}
+          >
+            Transferencia
+          </button>
+
+        </div>
 
       </div>
 
     </div>
 
   )
+
+}
+
+const tabStyle = {
+
+  flex:1,
+
+  padding:'15px',
+
+  background:'#111',
+
+  border:'none',
+
+  color:'white',
+
+  borderRadius:'12px',
+
+  cursor:'pointer'
+
+}
+
+const activeTab = {
+
+  ...tabStyle,
+
+  background:'#ff0080',
+
+  fontWeight:'bold'
+
+}
+
+const addButton = {
+
+  background:'#ff0080',
+
+  color:'white',
+
+  border:'none',
+
+  padding:'12px',
+
+  borderRadius:'10px',
+
+  cursor:'pointer',
+
+  width:'100%'
+
+}
+
+const payButton = {
+
+  flex:1,
+
+  background:'#ff0080',
+
+  color:'white',
+
+  border:'none',
+
+  padding:'15px',
+
+  borderRadius:'12px',
+
+  fontWeight:'bold',
+
+  cursor:'pointer'
+
+}
+
+const removeButton = {
+
+  marginLeft:'10px',
+
+  background:'red',
+
+  border:'none',
+
+  color:'white',
+
+  borderRadius:'5px',
+
+  cursor:'pointer'
 
 }
