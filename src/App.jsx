@@ -1,10 +1,18 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { supabase } from './supabase'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
 
 export default function App() {
 
   const qrRef = useRef()
+
+  const [tables, setTables] = useState([])
+
+  const [selectedTable, setSelectedTable] =
+    useState(null)
+
+  const [showQR, setShowQR] = useState(false)
 
   const products = [
 { id: 1, name: 'Entrada', price: 100 },
@@ -19,500 +27,566 @@ export default function App() {
     { id: 10, name: 'Poppers', price: 350 },
   ]
 
-  const initialTables = Array.from(
-    { length: 1000 },
-    (_, index) => ({
-      id: index + 1,
-      number: index + 1,
-      items: [],
-      paid: false,
-      paymentMethod: '',
-    })
-  )
+   useEffect(()=>{
 
-  const [tables, setTables] = useState(initialTables)
+    fetchTables()
 
-  const [selectedTable, setSelectedTable] = useState(null)
+    const channel = supabase
 
-  const [showQR, setShowQR] = useState(false)
+      .channel('tables-realtime')
 
-  function selectTable(table) {
+      .on(
+        'postgres_changes',
+        {
+          event:'*',
+          schema:'public',
+          table:'tables'
+        },
+        ()=>{
 
-    setSelectedTable(table)
+          fetchTables()
 
-    setShowQR(false)
-  }
-
-  function addProduct(product) {
-
-    if (!selectedTable) return
-
-    const updatedTables = tables.map(table => {
-
-      if (table.id === selectedTable.id) {
-
-        return {
-          ...table,
-          items: [...table.items, product]
         }
-      }
+      )
 
-      return table
-    })
+      .subscribe()
 
-    setTables(updatedTables)
+    return ()=>{
 
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
+      supabase.removeChannel(channel)
 
-    setSelectedTable(updatedSelected)
+    }
+
+  },[])
+
+  async function fetchTables(){
+
+    const { data } = await supabase
+
+      .from('tables')
+
+      .select('*')
+
+      .order('number')
+
+    setTables(data || [])
+
+    if(selectedTable){
+
+      const updated = data.find(
+        t=>t.id===selectedTable.id
+      )
+
+      setSelectedTable(updated)
+
+    }
+
   }
 
-  function removeProduct(indexToRemove) {
-
-    if (!selectedTable) return
-
-    const updatedTables = tables.map(table => {
-
-      if (table.id === selectedTable.id) {
-
-        return {
-          ...table,
-          items: table.items.filter(
-            (_, index) => index !== indexToRemove
-          )
-        }
-      }
-
-      return table
-    })
-
-    setTables(updatedTables)
-
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
-
-    setSelectedTable(updatedSelected)
-  }
-
-  function getTotal(items) {
+  function getTotal(items){
 
     return items.reduce(
-      (sum, item) => sum + item.price,
+      (sum,item)=>sum + item.price,
       0
     )
+
   }
 
-  function payTable(method) {
+  async function addProduct(product){
 
-    if (!selectedTable) return
+    if(!selectedTable) return
 
-    const updatedTables = tables.map(table => {
+    const updatedItems = [
 
-      if (table.id === selectedTable.id) {
+      ...selectedTable.items,
 
-        return {
-          ...table,
-          paid: true,
-          paymentMethod: method,
-        }
-      }
+      product
 
-      return table
-    })
+    ]
 
-    setTables(updatedTables)
+    await supabase
 
-    const updatedSelected = updatedTables.find(
-      table => table.id === selectedTable.id
-    )
+      .from('tables')
 
-    setSelectedTable(updatedSelected)
+      .update({
+
+        items:updatedItems
+
+      })
+
+      .eq('id',selectedTable.id)
+
+  }
+
+  async function removeProduct(index){
+
+    const updatedItems =
+      selectedTable.items.filter(
+        (_,i)=>i!==index
+      )
+
+    await supabase
+
+      .from('tables')
+
+      .update({
+
+        items:updatedItems
+
+      })
+
+      .eq('id',selectedTable.id)
+
+  }
+
+  async function payTable(method){
+
+    await supabase
+
+      .from('tables')
+
+      .update({
+
+        paid:true,
+
+        payment_method:method
+
+      })
+
+      .eq('id',selectedTable.id)
 
     setShowQR(true)
+
   }
 
-  async function downloadQR() {
+  async function resetTable(){
 
-    if (!qrRef.current) return
+    await supabase
+
+      .from('tables')
+
+      .update({
+
+        items:[],
+
+        paid:false,
+
+        payment_method:''
+
+      })
+
+      .eq('id',selectedTable.id)
+
+    setShowQR(false)
+
+  }
+
+  async function downloadQR(){
 
     const dataUrl = await toPng(qrRef.current)
 
-    const link = document.createElement('a')
+    const link =
+      document.createElement('a')
 
-    link.download = `HELLFIRE-CLIENTE-${selectedTable.number}.png`
+    link.download =
+      `CLIENTE-${selectedTable.number}.png`
 
     link.href = dataUrl
 
     link.click()
+
   }
 
   const qrData = selectedTable
+
     ? `
-HELLFIRE POS
-Cliente: ${selectedTable.number}
-Total: $${getTotal(selectedTable.items)}
-Metodo: ${selectedTable.paymentMethod}
-Estado: PAGADO
+CLIENTE ${selectedTable.number}
+TOTAL ${getTotal(selectedTable.items)}
+METODO ${selectedTable.payment_method}
+PAGADO
 `
+
     : ''
 
   return (
 
-  <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white">
 
-    {/* HEADER */}
+      <div className="p-6 border-b border-zinc-800 flex justify-between">
 
-    <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+        <h1 className="text-5xl font-black text-pink-500">
 
-      <h1 className="text-5xl font-black text-pink-500">
-        HELLFIRE POS
-      </h1>
+          HELLFIRE POS
 
-      <div className="text-right">
+        </h1>
 
-        <p className="text-zinc-400">
-          Cliente Actual
-        </p>
+        <div>
 
-        <h2 className="text-3xl font-black text-green-400">
+          <p className="text-zinc-400">
+            Cliente
+          </p>
 
-          {
+          <h2 className="text-3xl font-black text-green-400">
 
-            selectedTable
-            ? `#${selectedTable.number}`
-            : 'Ninguno'
+            {
 
-          }
+              selectedTable
+              ? `#${selectedTable.number}`
+              : 'Ninguno'
 
-        </h2>
+            }
 
-      </div>
-
-    </div>
-
-    {/* CONTENIDO */}
-
-    <div className="grid grid-cols-1 md:grid-cols-2 min-h-[90vh]">
-
-      {/* CLIENTES */}
-
-      <div className="p-6 border-r border-zinc-800">
-
-        <h2 className="text-4xl font-black mb-6">
-          Clientes
-        </h2>
-
-        <div className="grid grid-cols-3 gap-3 h-[75vh] overflow-y-scroll pr-2">
-
-          {tables.map(table => (
-
-            <button
-
-              key={table.id}
-
-              onClick={() => selectTable(table)}
-
-              className={`p-5 rounded-2xl transition-all
-
-              ${
-                selectedTable?.id === table.id
-                ? 'bg-pink-600 scale-105'
-                : table.paid
-                ? 'bg-green-600'
-                : 'bg-zinc-900 hover:bg-zinc-800'
-              }
-
-              `}
-
-            >
-
-              <h3 className="text-2xl font-black">
-                #{table.number}
-              </h3>
-
-              <p className="text-sm mt-2">
-
-                ${
-                  getTotal(table.items)
-                }
-
-              </p>
-
-            </button>
-
-          ))}
+          </h2>
 
         </div>
 
       </div>
 
-      {/* PRODUCTOS + COBRO */}
+      <div className="grid grid-cols-1 md:grid-cols-2">
 
-      <div className="p-6">
+        {/* CLIENTES */}
 
-        {!selectedTable && (
+        <div className="p-6 border-r border-zinc-800">
 
-          <div className="h-full flex items-center justify-center">
+          <h2 className="text-4xl font-black mb-5">
 
-            <div className="text-center">
+            Clientes
 
-              <h2 className="text-5xl font-black text-pink-500">
-                Selecciona un Cliente
-              </h2>
+          </h2>
 
-              <p className="text-zinc-500 mt-4 text-xl">
-                Para comenzar a agregar productos
-              </p>
+          <div className="grid grid-cols-3 gap-3 h-[80vh] overflow-y-scroll">
 
-            </div>
+            {
 
-          </div>
-
-        )}
-
-        {selectedTable && (
-
-          <>
-
-            <div className="flex justify-between items-center mb-6">
-
-              <h2 className="text-4xl font-black text-pink-500">
-
-                Cliente #{selectedTable.number}
-
-              </h2>
-
-              <h2 className="text-4xl font-black text-green-400">
-
-                ${
-                  getTotal(selectedTable.items)
-                }
-
-              </h2>
-
-            </div>
-
-            {/* PRODUCTOS */}
-
-            <div className="grid grid-cols-2 gap-4 mb-8">
-
-              {products.map(product => (
+              tables.map(table=>(
 
                 <button
 
-                  key={product.id}
+                  key={table.id}
 
-                  onClick={() => addProduct(product)}
+                  onClick={()=>
+                    setSelectedTable(table)
+                  }
 
-                  className="bg-zinc-900 hover:bg-pink-600 transition-all p-5 rounded-2xl text-left"
+                  className={`p-5 rounded-2xl
+
+                  ${
+                    selectedTable?.id===table.id
+                    ? 'bg-pink-600'
+                    : table.paid
+                    ? 'bg-green-600'
+                    : 'bg-zinc-900'
+                  }
+
+                  `}
 
                 >
 
                   <h3 className="text-2xl font-black">
 
-                    {product.name}
+                    #{table.number}
 
                   </h3>
 
-                  <p className="text-pink-400 text-xl mt-2">
+                  <p>
 
-                    ${product.price}
+                    ${
+                      getTotal(table.items)
+                    }
 
                   </p>
 
                 </button>
 
-              ))}
+              ))
 
-            </div>
+            }
 
-            {/* CARRITO */}
+          </div>
 
-            <div className="bg-zinc-900 rounded-2xl p-5">
+        </div>
 
-              <h2 className="text-3xl font-black mb-5">
-                Consumo
-              </h2>
+        {/* PRODUCTOS */}
 
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+        <div className="p-6">
 
-                {selectedTable.items.map((item, index) => (
+          {
 
-                  <div
+            !selectedTable && (
 
-                    key={index}
+              <div className="h-full flex items-center justify-center">
 
-                    className="flex justify-between items-center bg-black p-4 rounded-xl"
+                <h2 className="text-5xl font-black text-pink-500">
 
-                  >
+                  Selecciona Cliente
 
-                    <div>
-
-                      <p className="font-bold">
-
-                        {item.name}
-
-                      </p>
-
-                      <p className="text-pink-400">
-
-                        ${item.price}
-
-                      </p>
-
-                    </div>
-
-                    {!selectedTable.paid && (
-
-                      <button
-
-                        onClick={() => removeProduct(index)}
-
-                        className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl"
-
-                      >
-
-                        X
-
-                      </button>
-
-                    )}
-
-                  </div>
-
-                ))}
+                </h2>
 
               </div>
 
-              {/* PAGOS */}
+            )
 
-              {!selectedTable.paid && (
+          }
 
-                <div className="grid grid-cols-3 gap-3 mt-6">
+          {
 
-                  <button
+            selectedTable && (
 
-                    onClick={() => payTable('Efectivo')}
+              <>
 
-                    className="bg-green-500 hover:bg-green-600 py-4 rounded-2xl text-xl font-black"
+                <div className="flex justify-between items-center mb-6">
 
-                  >
+                  <h2 className="text-4xl font-black text-pink-500">
 
-                    Efectivo
+                    Cliente #{selectedTable.number}
 
-                  </button>
+                  </h2>
 
-                  <button
+                  <h2 className="text-4xl font-black text-green-400">
 
-                    onClick={() => payTable('Tarjeta')}
+                    ${
+                      getTotal(selectedTable.items)
+                    }
 
-                    className="bg-blue-500 hover:bg-blue-600 py-4 rounded-2xl text-xl font-black"
-
-                  >
-
-                    Tarjeta
-
-                  </button>
-
-                  <button
-
-                    onClick={() => payTable('Transferencia')}
-
-                    className="bg-purple-500 hover:bg-purple-600 py-4 rounded-2xl text-xl font-black"
-
-                  >
-
-                    Transferencia
-
-                  </button>
+                  </h2>
 
                 </div>
 
-              )}
+                <div className="grid grid-cols-2 gap-4">
 
-              {/* QR */}
+                  {
 
-              {selectedTable.paid && showQR && (
+                    products.map(product=>(
 
-                <div className="mt-10 flex flex-col items-center">
+                      <button
 
-                  <div
+                        key={product.id}
 
-                    ref={qrRef}
+                        onClick={()=>
+                          addProduct(product)
+                        }
 
-                    className="bg-black p-6 rounded-2xl border border-pink-500"
+                        className="bg-zinc-900 p-5 rounded-2xl hover:bg-pink-600"
 
-                  >
+                      >
 
-                    <h3 className="text-2xl font-black text-green-400 mb-5 text-center">
+                        <h3 className="text-2xl font-black">
 
-                      PAGADO
+                          {product.name}
 
-                    </h3>
+                        </h3>
 
-                    <QRCodeSVG
+                        <p className="text-pink-400">
 
-                      value={qrData}
+                          ${product.price}
 
-                      size={250}
+                        </p>
 
-                      bgColor="#000000"
+                      </button>
 
-                      fgColor="#ffffff"
+                    ))
 
-                    />
+                  }
 
-                    <p className="mt-5 text-center">
+                </div>
 
-                      Cliente #{selectedTable.number}
+                <div className="mt-8 bg-zinc-900 p-5 rounded-2xl">
 
-                    </p>
+                  <h2 className="text-3xl font-black mb-5">
 
-                    <p className="text-pink-400 text-center mt-2">
+                    Consumo
 
-                      {selectedTable.paymentMethod}
+                  </h2>
 
-                    </p>
+                  <div className="space-y-3">
 
-                    <p className="text-green-400 text-center mt-2">
+                    {
 
-                      ${getTotal(selectedTable.items)}
+                      selectedTable.items.map(
+                        (item,index)=>(
 
-                    </p>
+                          <div
+
+                            key={index}
+
+                            className="flex justify-between bg-black p-4 rounded-xl"
+
+                          >
+
+                            <div>
+
+                              <p className="font-bold">
+
+                                {item.name}
+
+                              </p>
+
+                              <p className="text-pink-400">
+
+                                ${item.price}
+
+                              </p>
+
+                            </div>
+
+                            {
+
+                              !selectedTable.paid && (
+
+                                <button
+
+                                  onClick={()=>
+                                    removeProduct(index)
+                                  }
+
+                                  className="bg-red-500 px-4 rounded-xl"
+
+                                >
+
+                                  X
+
+                                </button>
+
+                              )
+
+                            }
+
+                          </div>
+
+                        )
+
+                      )
+
+                    }
 
                   </div>
 
-                  <button
+                  {
 
-                    onClick={downloadQR}
+                    !selectedTable.paid && (
 
-                    className="mt-5 bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-2xl font-black"
+                      <div className="grid grid-cols-3 gap-3 mt-6">
 
-                  >
+                        <button
 
-                    Descargar QR
+                          onClick={()=>
+                            payTable('Efectivo')
+                          }
 
-                  </button>
+                          className="bg-green-500 py-4 rounded-2xl font-black"
+
+                        >
+
+                          Efectivo
+
+                        </button>
+
+                        <button
+
+                          onClick={()=>
+                            payTable('Tarjeta')
+                          }
+
+                          className="bg-blue-500 py-4 rounded-2xl font-black"
+
+                        >
+
+                          Tarjeta
+
+                        </button>
+
+                        <button
+
+                          onClick={()=>
+                            payTable('Transferencia')
+                          }
+
+                          className="bg-purple-500 py-4 rounded-2xl font-black"
+
+                        >
+
+                          Transferencia
+
+                        </button>
+
+                      </div>
+
+                    )
+
+                  }
+
+                  {
+
+                    selectedTable.paid && showQR && (
+
+                      <div className="mt-10 flex flex-col items-center">
+
+                        <div
+
+                          ref={qrRef}
+
+                          className="bg-black p-6 rounded-2xl border border-pink-500"
+
+                        >
+
+                          <QRCodeSVG
+
+                            value={qrData}
+
+                            size={250}
+
+                            bgColor="#000"
+
+                            fgColor="#fff"
+
+                          />
+
+                        </div>
+
+                        <button
+
+                          onClick={downloadQR}
+
+                          className="mt-5 bg-pink-500 px-6 py-3 rounded-2xl font-black"
+
+                        >
+
+                          Descargar QR
+
+                        </button>
+
+                        <button
+
+                          onClick={resetTable}
+
+                          className="mt-3 bg-red-500 px-6 py-3 rounded-2xl font-black"
+
+                        >
+
+                          Liberar Cliente
+
+                        </button>
+
+                      </div>
+
+                    )
+
+                  }
 
                 </div>
 
-              )}
+              </>
 
-            </div>
+            )
 
-          </>
+          }
 
-        )}
+        </div>
 
       </div>
 
     </div>
 
-  </div>
-
-)
+  )
 
 }
