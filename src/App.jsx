@@ -146,7 +146,7 @@ export default function App() {
 
         {
           Array.from(
-            { length:20 },
+            { length:1000 },
             (_,i)=>i+1
           ).map(number=>(
 
