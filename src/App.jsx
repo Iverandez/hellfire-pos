@@ -138,61 +138,69 @@ export default function App() {
 
   )
 
-  async function pay(method){
+async function pay(method){
 
-    if(!selectedCustomer){
+  if(!selectedCustomer){
 
-      alert('Selecciona cliente')
-      return
-
-    }
-
-    if(currentCart.length===0){
-
-      alert('No hay productos')
-      return
-
-    }
-
-    const { error } = await supabase
-
-      .from('orders')
-
-      .insert([{
-
-        customer_number:selectedCustomer,
-
-        items:currentCart,
-
-        total,
-
-        payment_method:method,
-
-        paid:true
-
-      }])
-
-    if(error){
-
-      console.log(error)
-
-      alert(error.message)
-
-      return
-
-    }
-
-    alert('Pago realizado')
-
-    setCustomerCarts(prev=>({
-
-      ...prev,
-
-      [selectedCustomer]:[]
-
-    }))
+    alert('Selecciona cliente')
+    return
 
   }
+
+  if(currentCart.length===0){
+
+    alert('No hay productos')
+    return
+
+  }
+
+  const orderData = {
+
+    customer_number:selectedCustomer,
+
+    items:currentCart,
+
+    total,
+
+    payment_method:method,
+
+    paid:true,
+
+    created_at:new Date()
+
+  }
+
+  const { data, error } = await supabase
+
+    .from('orders')
+
+    .insert([orderData])
+
+    .select()
+
+  if(error){
+
+    console.log(error)
+
+    alert(error.message)
+
+    return
+
+  }
+
+  alert('Pago realizado')
+
+  await fetchOrders()
+
+  setCustomerCarts(prev=>({
+
+    ...prev,
+
+    [selectedCustomer]:[]
+
+  }))
+
+}
 
   return (
 
