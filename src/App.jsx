@@ -1,367 +1,136 @@
-import { useEffect, useState } from 'react'
-import { supabase } from './supabase'
+import { useState } from 'react'
 
 export default function App() {
-
-  const [orders, setOrders] = useState([])
-
-  const [selectedCustomer, setSelectedCustomer] =
-    useState(null)
 
   const [cart, setCart] = useState([])
 
   const products = [
-
-    { id:1, name:'Entrada', price: 100 },
-    { id:2, name:'Barra Libre', price: 300 },
-    { id:3, name:'Cerveza', price:60 },
-    { id:4, name:'Caribe', price: 75 },
-    { id:5, name:'Sky', price: 80 },
-    { id:6, name:'Cigarros', price: 10 },
-    { id:7, name:'Agua', price: 60 },
-
+    {
+      id: 1,
+      name: 'Cerveza',
+      price: 80
+    },
+    {
+      id: 2,
+      name: 'VIP',
+      price: 1500
+    },
+    {
+      id: 3,
+      name: 'Whisky',
+      price: 2500
+    }
   ]
 
-  useEffect(()=>{
-
-    fetchOrders()
-
-    const channel =
-      supabase
-        .channel('orders')
-
-        .on(
-          'postgres_changes',
-          {
-            event:'*',
-            schema:'public',
-            table:'orders'
-          },
-          ()=>{
-
-            fetchOrders()
-
-          }
-        )
-
-        .subscribe()
-
-    return ()=>{
-
-      supabase.removeChannel(channel)
-
-    }
-
-  },[])
-
-  async function fetchOrders(){
-
-    const { data } =
-      await supabase
-        .from('orders')
-        .select('*')
-        .order('id',{ ascending:false })
-
-    setOrders(data || [])
+  function addToCart(product) {
+    setCart([...cart, product])
   }
 
-  function addProduct(product){
-
-    setCart([
-      ...cart,
-      product
-    ])
-  }
-
-  function removeProduct(index){
-
-    const updated = [...cart]
-
-    updated.splice(index,1)
-
-    setCart(updated)
-  }
-
-  const total =
-    cart.reduce(
-      (acc,item)=>acc + item.price,
-      0
-    )
-
-  async function pay(method){
-
-    if(!selectedCustomer) return
-
-    await supabase
-      .from('orders')
-      .insert([{
-
-        customer_number:selectedCustomer,
-
-        items:cart,
-
-        total,
-
-        payment_method:method,
-
-        paid:true
-
-      }])
-
-    setCart([])
-  }
+  const total = cart.reduce(
+    (sum, item) => sum + item.price,
+    0
+  )
 
   return (
 
-    <div
-      style={{
-        minHeight:'100vh',
-        background:'black',
-        color:'white',
-        padding:20
-      }}
-    >
+    <div className="min-h-screen bg-black text-white p-6">
 
-      <h1
-        style={{
-          color:'#ff0080'
-        }}
-      >
+      <h1 className="text-6xl font-black text-center text-pink-500 mb-10">
         HELLFIRE POS
       </h1>
 
-      <h2>
-        Clientes
-      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-      <div
-        style={{
-          display:'grid',
-          gridTemplateColumns:
-            'repeat(5,1fr)',
-          gap:10
-        }}
-      >
+        <div>
 
-        {
-          Array.from(
-            { length:20 },
-            (_,i)=>i+1
-          ).map(number=>(
+          <h2 className="text-3xl font-bold mb-5">
+            Productos
+          </h2>
 
-            <button
-              key={number}
+          <div className="space-y-4">
 
-              onClick={()=>
-                setSelectedCustomer(number)
-              }
+            {products.map(product => (
 
-              style={{
+              <div
+                key={product.id}
+                className="bg-zinc-900 rounded-2xl p-5 flex justify-between items-center"
+              >
 
-                padding:20,
+                <div>
+                  <h3 className="text-2xl font-bold">
+                    {product.name}
+                  </h3>
 
-                background:
-                  selectedCustomer===number
-                  ? '#ff0080'
-                  : '#222',
+                  <p className="text-pink-400 text-xl">
+                    ${product.price}
+                  </p>
+                </div>
 
-                color:'white',
+                <button
+                  onClick={() => addToCart(product)}
+                  className="bg-pink-500 hover:bg-pink-600 px-5 py-3 rounded-xl font-bold"
+                >
+                  Agregar
+                </button>
 
-                border:'none',
+              </div>
 
-                borderRadius:10
-              }}
-            >
-              {number}
-            </button>
+            ))}
 
-          ))
-        }
+          </div>
 
-      </div>
+        </div>
 
-      <h2
-        style={{
-          marginTop:30
-        }}
-      >
-        Productos
-      </h2>
+        <div>
 
-      <div
-        style={{
-          display:'flex',
-          gap:10,
-          flexWrap:'wrap'
-        }}
-      >
+          <h2 className="text-3xl font-bold mb-5">
+            Cobro
+          </h2>
 
-        {
-          products.map(product=>(
+          <div className="bg-zinc-900 rounded-2xl p-5 min-h-[400px]">
 
-            <button
-              key={product.id}
+            <div className="space-y-3">
 
-              onClick={()=>
-                addProduct(product)
-              }
+              {cart.map((item, index) => (
 
-              style={{
+                <div
+                  key={index}
+                  className="flex justify-between border-b border-zinc-700 pb-2"
+                >
 
-                padding:20,
+                  <span>
+                    {item.name}
+                  </span>
 
-                background:'#111',
+                  <span>
+                    ${item.price}
+                  </span>
 
-                color:'white',
+                </div>
 
-                border:
-                  '1px solid #ff0080',
+              ))}
 
-                borderRadius:10
-              }}
-            >
-              {product.name}
+            </div>
 
-              <br/>
+            <div className="mt-10">
 
-              ${product.price}
-            </button>
-
-          ))
-        }
-
-      </div>
-
-      <h2
-        style={{
-          marginTop:30
-        }}
-      >
-        Consumo Cliente #{selectedCustomer}
-      </h2>
-
-      {
-        cart.map((item,index)=>(
-
-          <div
-            key={index}
-
-            style={{
-              display:'flex',
-              justifyContent:'space-between',
-              background:'#111',
-              padding:10,
-              marginTop:10,
-              borderRadius:10
-            }}
-          >
-
-            <span>
-              {item.name}
-            </span>
-
-            <div>
-
-              ${item.price}
+              <h3 className="text-4xl font-black text-pink-500">
+                Total: ${total}
+              </h3>
 
               <button
-
-                onClick={()=>
-                  removeProduct(index)
-                }
-
-                style={{
-                  marginLeft:10,
-                  background:'red',
-                  color:'white',
-                  border:'none',
-                  borderRadius:5
-                }}
+                className="w-full mt-5 bg-green-500 hover:bg-green-600 py-4 rounded-2xl text-2xl font-black"
               >
-                X
+                Cobrar
               </button>
 
             </div>
 
           </div>
 
-        ))
-      }
-
-      <h1
-        style={{
-          marginTop:20
-        }}
-      >
-        TOTAL: ${total}
-      </h1>
-
-      <div
-        style={{
-          display:'flex',
-          gap:10
-        }}
-      >
-
-        <button
-          onClick={()=>pay('Efectivo')}
-        >
-          Efectivo
-        </button>
-
-        <button
-          onClick={()=>pay('Tarjeta')}
-        >
-          Tarjeta
-        </button>
-
-        <button
-          onClick={()=>pay('Transferencia')}
-        >
-          Transferencia
-        </button>
+        </div>
 
       </div>
-
-      <h2
-        style={{
-          marginTop:40
-        }}
-      >
-        Ventas Tiempo Real
-      </h2>
-
-      {
-        orders.map(order=>(
-
-          <div
-            key={order.id}
-
-            style={{
-              background:'#111',
-              padding:20,
-              marginTop:10,
-              borderRadius:10
-            }}
-          >
-
-            Cliente:
-            #{order.customer_number}
-
-            <br/>
-
-            Total:
-            ${order.total}
-
-            <br/>
-
-            Pago:
-            {order.payment_method}
-
-          </div>
-
-        ))
-      }
 
     </div>
   )
