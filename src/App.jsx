@@ -29,12 +29,6 @@ const products = [
 
 export default function App() {
 
-  const [session, setSession] = useState(null)
-
-  const [email, setEmail] = useState('')
-
-  const [password, setPassword] = useState('')
-
   const [orders, setOrders] = useState([])
 
   const [selectedCustomer, setSelectedCustomer] =
@@ -45,92 +39,35 @@ export default function App() {
 
   useEffect(()=>{
 
-    supabase.auth.getSession()
+    fetchOrders()
 
-      .then(({ data:{ session } })=>{
+    const channel = supabase
 
-        setSession(session)
+      .channel('orders-live')
 
-      })
+      .on(
+        'postgres_changes',
+        {
+          event:'*',
+          schema:'public',
+          table:'orders'
+        },
+        ()=>{
 
-    const {
+          fetchOrders()
 
-      data:{ subscription }
+        }
+      )
 
-    } = supabase.auth.onAuthStateChange(
+      .subscribe()
 
-      (_event,session)=>{
+    return ()=>{
 
-        setSession(session)
+      supabase.removeChannel(channel)
 
-      }
-
-    )
-
-    return ()=>subscription.unsubscribe()
+    }
 
   },[])
-
-  useEffect(()=>{
-
-    if(session){
-
-      fetchOrders()
-
-      const channel = supabase
-
-        .channel('orders-live')
-
-        .on(
-          'postgres_changes',
-          {
-            event:'*',
-            schema:'public',
-            table:'orders'
-          },
-          ()=>{
-
-            fetchOrders()
-
-          }
-        )
-
-        .subscribe()
-
-      return ()=>{
-
-        supabase.removeChannel(channel)
-
-      }
-
-    }
-
-  },[session])
-
-  async function login(){
-
-    const { error } = await supabase.auth
-
-      .signInWithPassword({
-
-        email,
-        password
-
-      })
-
-    if(error){
-
-      alert(error.message)
-
-    }
-
-  }
-
-  async function logout(){
-
-    await supabase.auth.signOut()
-
-  }
 
   async function fetchOrders(){
 
@@ -253,115 +190,6 @@ export default function App() {
 
   }
 
-  if(!session){
-
-    return (
-
-      <div
-        style={{
-
-          minHeight:'100vh',
-
-          background:'#000',
-
-          display:'flex',
-
-          justifyContent:'center',
-
-          alignItems:'center',
-
-          flexDirection:'column',
-
-          color:'white',
-
-          fontFamily:'Arial'
-
-        }}
-      >
-
-        <h1
-          style={{
-
-            fontSize:'50px',
-
-            marginBottom:'30px',
-
-            background:
-              'linear-gradient(90deg,#ff0080,#8a2be2)',
-
-            WebkitBackgroundClip:'text',
-
-            WebkitTextFillColor:'transparent'
-
-          }}
-        >
-          HELLFIRE POS
-        </h1>
-
-        <div
-          style={{
-
-            background:'#111',
-
-            padding:'30px',
-
-            borderRadius:'20px',
-
-            width:'300px'
-
-          }}
-        >
-
-          <input
-
-            placeholder='Correo'
-
-            value={email}
-
-            onChange={e=>
-              setEmail(e.target.value)
-            }
-
-            style={inputStyle}
-
-          />
-
-          <input
-
-            type='password'
-
-            placeholder='Contraseña'
-
-            value={password}
-
-            onChange={e=>
-              setPassword(e.target.value)
-            }
-
-            style={inputStyle}
-
-          />
-
-          <button
-
-            onClick={login}
-
-            style={loginButton}
-
-          >
-
-            Entrar
-
-          </button>
-
-        </div>
-
-      </div>
-
-    )
-
-  }
-
   return (
 
     <div
@@ -374,37 +202,20 @@ export default function App() {
       }}
     >
 
-      <div
+      <h1
         style={{
-
-          display:'flex',
-
-          justifyContent:'space-between',
-
-          alignItems:'center'
-
+          color:'#ff0080',
+          fontSize:'45px',
+          textAlign:'center'
         }}
       >
-
-        <h1
-          style={{
-            color:'#ff0080'
-          }}
-        >
-          HELLFIRE POS
-        </h1>
-
-        <button
-          onClick={logout}
-          style={logoutButton}
-        >
-          Cerrar sesión
-        </button>
-
-      </div>
+        HELLFIRE POS
+      </h1>
 
       <h2>
-        Cliente {selectedCustomer || 'Ninguno'}
+        Cliente:
+        {' '}
+        {selectedCustomer || 'Ninguno'}
       </h2>
 
       <div
@@ -497,8 +308,20 @@ export default function App() {
                 addProduct(product)
               }
 
-              style={productButton}
+              style={{
 
+                background:'#111',
+
+                border:
+                  '1px solid #ff0080',
+
+                color:'white',
+
+                padding:'20px',
+
+                borderRadius:'15px'
+
+              }}
             >
 
               {product.name}
@@ -539,11 +362,11 @@ export default function App() {
 
               background:'#111',
 
-              padding:'10px',
+              padding:'15px',
 
-              borderRadius:'10px',
+              marginTop:'10px',
 
-              marginTop:'10px'
+              borderRadius:'10px'
 
             }}
           >
@@ -562,8 +385,13 @@ export default function App() {
                   removeProduct(index)
                 }
 
-                style={removeButton}
-
+                style={{
+                  marginLeft:'10px',
+                  background:'red',
+                  border:'none',
+                  color:'white',
+                  borderRadius:'5px'
+                }}
               >
                 X
               </button>
@@ -593,16 +421,20 @@ export default function App() {
 
         <button
           onClick={()=>pay('Efectivo')}
-          style={payButton}
         >
           Efectivo
         </button>
 
         <button
           onClick={()=>pay('Tarjeta')}
-          style={payButton}
         >
           Tarjeta
+        </button>
+
+        <button
+          onClick={()=>pay('Transferencia')}
+        >
+          Transferencia
         </button>
 
       </div>
@@ -610,103 +442,5 @@ export default function App() {
     </div>
 
   )
-
-}
-
-const inputStyle = {
-
-  width:'100%',
-
-  padding:'15px',
-
-  marginBottom:'15px',
-
-  borderRadius:'10px',
-
-  border:'none',
-
-  background:'#222',
-
-  color:'white'
-
-}
-
-const loginButton = {
-
-  width:'100%',
-
-  padding:'15px',
-
-  border:'none',
-
-  borderRadius:'10px',
-
-  background:'#ff0080',
-
-  color:'white',
-
-  cursor:'pointer'
-
-}
-
-const logoutButton = {
-
-  padding:'10px 20px',
-
-  border:'none',
-
-  borderRadius:'10px',
-
-  background:'red',
-
-  color:'white',
-
-  cursor:'pointer'
-
-}
-
-const productButton = {
-
-  background:'#111',
-
-  border:'1px solid #ff0080',
-
-  color:'white',
-
-  padding:'20px',
-
-  borderRadius:'15px'
-
-}
-
-const payButton = {
-
-  flex:1,
-
-  padding:'15px',
-
-  border:'none',
-
-  borderRadius:'10px',
-
-  background:'#ff0080',
-
-  color:'white',
-
-  cursor:'pointer'
-
-}
-
-const removeButton = {
-
-  marginLeft:'10px',
-
-  background:'red',
-
-  color:'white',
-
-  border:'none',
-
-  borderRadius:'5px'
 
 }
