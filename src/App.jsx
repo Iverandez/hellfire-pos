@@ -7,10 +7,16 @@ export default function App() {
   const qrRef = useRef()
 
   const products = [
-    { id: 1, name: 'Cerveza', price: 80 },
-    { id: 2, name: 'VIP', price: 1500 },
-    { id: 3, name: 'Whisky', price: 2500 },
-    { id: 4, name: 'Vodka', price: 1800 },
+{ id: 1, name: 'Entrada', price: 100 },
+    { id: 2, name: 'Barra Libre', price: 300 },
+    { id: 3, name: 'Cerveza Lata', price: 80 },
+    { id: 4, name: 'Caribe', price: 60 },
+    { id: 5, name: 'Sky', price: 50 },
+    { id: 6, name: 'Cigarros', price: 10 },
+    { id: 7, name: 'Perla Negra', price: 200 },
+    { id: 8, name: 'Mojito', price: 150 },
+    { id: 9, name: 'Paleta', price: 5 },
+    { id: 10, name: 'Poppers', price: 350 },
   ]
 
   const initialTables = Array.from(
