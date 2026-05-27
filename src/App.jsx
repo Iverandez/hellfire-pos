@@ -59,38 +59,31 @@ export default function App() {
 
   },[])
 
-  async function fetchTables(){
+async function fetchTables(){
 
-    const { data } = await supabase
+  const { data, error } = await supabase
 
-      .from('tables')
+    .from('tables')
 
-      .select('*')
+    .select('*')
 
-      .order('number')
+    .order('number', { ascending:true })
 
-    setTables(data || [])
+  console.log('DATA:', data)
 
-    if(selectedTable){
+  console.log('ERROR:', error)
 
-      const updated = data.find(
-        t=>t.id===selectedTable.id
-      )
+  if(error){
 
-      setSelectedTable(updated)
+    alert(error.message)
 
-    }
+    return
 
   }
 
-  function getTotal(items){
+  setTables(data)
 
-    return items.reduce(
-      (sum,item)=>sum + item.price,
-      0
-    )
-
-  }
+}
 
   async function addProduct(product){
 
