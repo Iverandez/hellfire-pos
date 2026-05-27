@@ -23,13 +23,14 @@ export default function App() {
     { id: 10, name: 'Poppers', price: 350 },
   ]
 
-  useEffect(()=>{
+   useEffect(()=>{
 
     fetchOrders()
 
     const channel =
       supabase
-        .channel('orders')
+
+        .channel('realtime-orders')
 
         .on(
           'postgres_changes',
@@ -38,11 +39,15 @@ export default function App() {
             schema:'public',
             table:'orders'
           },
-          ()=>{
+
+          (payload)=>{
+
+            console.log(payload)
 
             fetchOrders()
 
           }
+
         )
 
         .subscribe()
@@ -57,19 +62,29 @@ export default function App() {
 
   async function fetchOrders(){
 
-    const { data } =
+    const { data, error } =
       await supabase
+
         .from('orders')
+
         .select('*')
+
         .order('id',{ ascending:false })
+
+    if(error){
+
+      console.log(error)
+
+      return
+    }
 
     setOrders(data || [])
   }
 
   function addProduct(product){
 
-    setCart([
-      ...cart,
+    setCart(prev=>[
+      ...prev,
       product
     ])
   }
@@ -91,23 +106,50 @@ export default function App() {
 
   async function pay(method){
 
-    if(!selectedCustomer) return
+    if(!selectedCustomer){
 
-    await supabase
-      .from('orders')
-      .insert([{
+      alert('Selecciona cliente')
 
-        customer_number:selectedCustomer,
+      return
+    }
 
-        items:cart,
+    if(cart.length===0){
 
-        total,
+      alert('Agrega productos')
 
-        payment_method:method,
+      return
+    }
 
-        paid:true
+    const { error } =
 
-      }])
+      await supabase
+
+        .from('orders')
+
+        .insert([{
+
+          customer_number:selectedCustomer,
+
+          items:cart,
+
+          total,
+
+          payment_method:method,
+
+          paid:true
+
+        }])
+
+    if(error){
+
+      console.log(error)
+
+      alert('Error guardando venta')
+
+      return
+    }
+
+    alert('Pago realizado')
 
     setCart([])
   }
@@ -125,7 +167,8 @@ export default function App() {
 
       <h1
         style={{
-          color:'#ff0080'
+          color:'#ff0080',
+          fontSize:40
         }}
       >
         HELLFIRE POS
@@ -138,17 +181,28 @@ export default function App() {
       <div
         style={{
           display:'grid',
+
           gridTemplateColumns:
-            'repeat(5,1fr)',
-          gap:10
+            'repeat(10,1fr)',
+
+          gap:10,
+
+          maxHeight:'400px',
+
+          overflowY:'scroll',
+
+          padding:10
         }}
       >
 
         {
+
           Array.from(
             { length:1000 },
             (_,i)=>i+1
-          ).map(number=>(
+          )
+
+          .map(number=>(
 
             <button
               key={number}
@@ -159,18 +213,20 @@ export default function App() {
 
               style={{
 
-                padding:20,
+                padding:15,
 
                 background:
                   selectedCustomer===number
                   ? '#ff0080'
-                  : '#222',
+                  : '#111',
 
                 color:'white',
 
                 border:'none',
 
-                borderRadius:10
+                borderRadius:10,
+
+                cursor:'pointer'
               }}
             >
               {number}
@@ -218,14 +274,18 @@ export default function App() {
                 border:
                   '1px solid #ff0080',
 
-                borderRadius:10
+                borderRadius:10,
+
+                cursor:'pointer'
               }}
             >
+
               {product.name}
 
               <br/>
 
               ${product.price}
+
             </button>
 
           ))
@@ -238,21 +298,28 @@ export default function App() {
           marginTop:30
         }}
       >
-        Consumo Cliente #{selectedCustomer}
+        Cliente #{selectedCustomer}
       </h2>
 
       {
+
         cart.map((item,index)=>(
 
           <div
             key={index}
 
             style={{
+
               display:'flex',
+
               justifyContent:'space-between',
+
               background:'#111',
+
               padding:10,
+
               marginTop:10,
+
               borderRadius:10
             }}
           >
@@ -276,7 +343,8 @@ export default function App() {
                   background:'red',
                   color:'white',
                   border:'none',
-                  borderRadius:5
+                  borderRadius:5,
+                  cursor:'pointer'
                 }}
               >
                 X
@@ -291,7 +359,8 @@ export default function App() {
 
       <h1
         style={{
-          marginTop:20
+          marginTop:20,
+          color:'#00ff99'
         }}
       >
         TOTAL: ${total}
@@ -333,31 +402,50 @@ export default function App() {
       </h2>
 
       {
+
         orders.map(order=>(
 
           <div
             key={order.id}
 
             style={{
+
               background:'#111',
+
               padding:20,
+
               marginTop:10,
-              borderRadius:10
+
+              borderRadius:10,
+
+              border:
+                '1px solid #ff0080'
             }}
           >
 
-            Cliente:
-            #{order.customer_number}
+            <h3>
+              Cliente #{order.customer_number}
+            </h3>
 
-            <br/>
+            <p>
+              Total: ${order.total}
+            </p>
 
-            Total:
-            ${order.total}
+            <p>
+              Pago:
+              {' '}
+              {order.payment_method}
+            </p>
 
-            <br/>
-
-            Pago:
-            {order.payment_method}
+            <p>
+              Fecha:
+              {' '}
+              {
+                new Date(
+                  order.created_at
+                ).toLocaleString()
+              }
+            </p>
 
           </div>
 
@@ -366,4 +454,4 @@ export default function App() {
 
     </div>
   )
-}
+} 
