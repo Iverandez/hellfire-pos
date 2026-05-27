@@ -14,6 +14,10 @@ export default function App() {
     { id: 6, name: 'Sky', price: 80 },
     { id: 7, name: 'Cigarros', price: 10 },
     { id: 8, name: 'Paleta', price: 5 },
+    { id: 9, name: 'Papas', price: 15 },
+    { id: 10, name: 'Condones', price: 15 },
+    { id: 11, name: 'Perla Negra', price: 200 },
+    { id: 12, name: 'Wiski', price: 100 },
   ]
 
   const initialTables = Array.from(
