@@ -1,690 +1,411 @@
-import { useEffect, useState } from 'react'
-import { supabase } from './supabase'
-
-const products = [
-
-  { id:1, name:'Entrada', price:100 },
-
-  { id:2, name:'Barra Libre', price:300 },
-
-  { id:3, name:'Cerveza', price:60 },
-
-  { id:4, name:'Caribe', price:60 },
-
-  { id:5, name:'Sky', price:80 },
-
-  { id:6, name:'Cigarros', price:10 },
-
-  { id:7, name:'Paleta', price:5 },
-
-  { id:8, name:'Papas', price:15 },
-
-  { id:9, name:'Condones', price:15 },
-
-  { id:10, name:'Perla Negra', price:200 },
-
-  { id:11, name:'Wiski', price:100 },
-
-]
+import { useState, useRef } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
+import { toPng } from 'html-to-image'
 
 export default function App() {
 
-  const [orders, setOrders] = useState([])
+  const qrRef = useRef()
 
-  const [selectedCustomer, setSelectedCustomer] =
-    useState(null)
+  const products = [
+    { id: 1, name: 'Cerveza', price: 80 },
+    { id: 2, name: 'VIP', price: 1500 },
+    { id: 3, name: 'Whisky', price: 2500 },
+    { id: 4, name: 'Vodka', price: 1800 },
+  ]
 
-  const [cart, setCart] = useState([])
-
-  const [tab, setTab] = useState('clientes')
-
-  useEffect(()=>{
-
-    fetchOrders()
-
-    const channel = supabase
-
-      .channel('orders-live')
-
-      .on(
-        'postgres_changes',
-        {
-          event:'*',
-          schema:'public',
-          table:'orders'
-        },
-        ()=>{
-
-          fetchOrders()
-
-        }
-      )
-
-      .subscribe()
-
-    return ()=>{
-
-      supabase.removeChannel(channel)
-
-    }
-
-  },[])
-
-  async function fetchOrders(){
-
-    const { data } = await supabase
-
-      .from('orders')
-
-      .select('*')
-
-      .order('id',{ ascending:false })
-
-    setOrders(data || [])
-
-  }
-
-  function addProduct(product){
-
-    setCart(prev=>[
-      ...prev,
-      product
-    ])
-
-  }
-
-  function removeProduct(index){
-
-    const updated = [...cart]
-
-    updated.splice(index,1)
-
-    setCart(updated)
-
-  }
-
-  const total = cart.reduce(
-
-    (acc,item)=>acc + item.price,
-
-    0
-
+  const initialTables = Array.from(
+    { length: 1000 },
+    (_, index) => ({
+      id: index + 1,
+      number: index + 1,
+      items: [],
+      paid: false,
+      paymentMethod: '',
+    })
   )
 
-  async function pay(method){
+  const [tables, setTables] = useState(initialTables)
 
-    if(!selectedCustomer){
+  const [selectedTable, setSelectedTable] = useState(null)
 
-      alert('Selecciona cliente')
-      return
+  const [showQR, setShowQR] = useState(false)
 
-    }
+  function selectTable(table) {
 
-    if(cart.length===0){
+    setSelectedTable(table)
 
-      alert('Agrega productos')
-      return
-
-    }
-
-    const { error } = await supabase
-
-      .from('orders')
-
-      .insert([{
-
-        customer_number:selectedCustomer,
-
-        items:cart,
-
-        total,
-
-        payment_method:method,
-
-        paid:true
-
-      }])
-
-    if(error){
-
-      console.log(error)
-
-      alert(error.message)
-
-      return
-
-    }
-
-    alert('Pago realizado')
-
-    setCart([])
-
+    setShowQR(false)
   }
+
+  function addProduct(product) {
+
+    if (!selectedTable) return
+
+    const updatedTables = tables.map(table => {
+
+      if (table.id === selectedTable.id) {
+
+        return {
+          ...table,
+          items: [...table.items, product]
+        }
+      }
+
+      return table
+    })
+
+    setTables(updatedTables)
+
+    const updatedSelected = updatedTables.find(
+      table => table.id === selectedTable.id
+    )
+
+    setSelectedTable(updatedSelected)
+  }
+
+  function removeProduct(indexToRemove) {
+
+    if (!selectedTable) return
+
+    const updatedTables = tables.map(table => {
+
+      if (table.id === selectedTable.id) {
+
+        return {
+          ...table,
+          items: table.items.filter(
+            (_, index) => index !== indexToRemove
+          )
+        }
+      }
+
+      return table
+    })
+
+    setTables(updatedTables)
+
+    const updatedSelected = updatedTables.find(
+      table => table.id === selectedTable.id
+    )
+
+    setSelectedTable(updatedSelected)
+  }
+
+  function getTotal(items) {
+
+    return items.reduce(
+      (sum, item) => sum + item.price,
+      0
+    )
+  }
+
+  function payTable(method) {
+
+    if (!selectedTable) return
+
+    const updatedTables = tables.map(table => {
+
+      if (table.id === selectedTable.id) {
+
+        return {
+          ...table,
+          paid: true,
+          paymentMethod: method,
+        }
+      }
+
+      return table
+    })
+
+    setTables(updatedTables)
+
+    const updatedSelected = updatedTables.find(
+      table => table.id === selectedTable.id
+    )
+
+    setSelectedTable(updatedSelected)
+
+    setShowQR(true)
+  }
+
+  async function downloadQR() {
+
+    if (!qrRef.current) return
+
+    const dataUrl = await toPng(qrRef.current)
+
+    const link = document.createElement('a')
+
+    link.download = `HELLFIRE-CLIENTE-${selectedTable.number}.png`
+
+    link.href = dataUrl
+
+    link.click()
+  }
+
+  const qrData = selectedTable
+    ? `
+HELLFIRE POS
+Cliente: ${selectedTable.number}
+Total: $${getTotal(selectedTable.items)}
+Metodo: ${selectedTable.paymentMethod}
+Estado: PAGADO
+`
+    : ''
 
   return (
 
-    <div
-      style={{
-        minHeight:'100vh',
-        background:'#050505',
-        color:'white',
-        fontFamily:'Arial',
-        paddingBottom:'120px'
-      }}
-    >
+    <div className="min-h-screen bg-black text-white p-6">
 
-      <div
-        style={{
-          padding:'20px'
-        }}
-      >
+      <h1 className="text-6xl font-black text-center text-pink-500 mb-10">
+        HELLFIRE POS
+      </h1>
 
-        <h1
-          style={{
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            textAlign:'center',
+        {/* CLIENTES */}
 
-            fontSize:'45px',
+        <div>
 
-            marginBottom:'20px',
-
-            background:
-              'linear-gradient(90deg,#ff0080,#ff4d00,#8a2be2)',
-
-            WebkitBackgroundClip:'text',
-
-            WebkitTextFillColor:'transparent'
-
-          }}
-        >
-          HELLFIRE POS
-        </h1>
-
-        <div
-          style={{
-
-            display:'flex',
-
-            gap:'10px',
-
-            marginBottom:'25px'
-
-          }}
-        >
-
-          <button
-            onClick={()=>setTab('clientes')}
-            style={
-              tab==='clientes'
-              ? activeTab
-              : tabStyle
-            }
-          >
+          <h2 className="text-3xl font-bold mb-5">
             Clientes
-          </button>
+          </h2>
 
-          <button
-            onClick={()=>setTab('productos')}
-            style={
-              tab==='productos'
-              ? activeTab
-              : tabStyle
-            }
-          >
-            Productos
-          </button>
+          <div className="grid grid-cols-2 gap-3 h-[700px] overflow-y-scroll pr-2">
 
-          <button
-            onClick={()=>setTab('ventas')}
-            style={
-              tab==='ventas'
-              ? activeTab
-              : tabStyle
-            }
-          >
-            Ventas
-          </button>
+            {tables.map(table => (
+
+              <button
+                key={table.id}
+                onClick={() => selectTable(table)}
+                className={`p-4 rounded-2xl transition
+                ${
+                  selectedTable?.id === table.id
+                  ? 'bg-pink-600'
+                  : table.paid
+                  ? 'bg-green-600'
+                  : 'bg-zinc-900 hover:bg-zinc-800'
+                }
+                `}
+              >
+
+                <h3 className="text-xl font-black">
+                  #{table.number}
+                </h3>
+
+                <p className="text-sm mt-1">
+                  ${getTotal(table.items)}
+                </p>
+
+              </button>
+
+            ))}
+
+          </div>
 
         </div>
 
-        {
+        {/* PRODUCTOS */}
 
-          tab==='clientes' && (
+        <div>
 
-            <div>
+          <h2 className="text-3xl font-bold mb-5">
+            Productos
+          </h2>
 
-              <h2>
-                Selecciona Cliente
-              </h2>
+          <div className="space-y-4">
 
-              <div
-                style={{
-
-                  display:'grid',
-
-                  gridTemplateColumns:
-                    'repeat(5,1fr)',
-
-                  gap:'10px',
-
-                  maxHeight:'500px',
-
-                  overflowY:'scroll'
-
-                }}
-              >
-
-                {
-
-                  Array.from(
-                    { length:1000 },
-                    (_,i)=>i+1
-                  )
-
-                  .map(number=>(
-
-                    <button
-
-                      key={number}
-
-                      onClick={()=>
-                        setSelectedCustomer(number)
-                      }
-
-                      style={{
-
-                        padding:'20px',
-
-                        borderRadius:'15px',
-
-                        border:'none',
-
-                        fontWeight:'bold',
-
-                        cursor:'pointer',
-
-                        background:
-                          selectedCustomer===number
-                          ? '#ff0080'
-                          : '#111',
-
-                        color:'white'
-
-                      }}
-                    >
-
-                      Cliente {number}
-
-                    </button>
-
-                  ))
-
-                }
-
-              </div>
-
-            </div>
-
-          )
-
-        }
-
-        {
-
-          tab==='productos' && (
-
-            <div>
-
-              <h2>
-                Productos
-              </h2>
+            {products.map(product => (
 
               <div
-                style={{
-
-                  display:'grid',
-
-                  gridTemplateColumns:
-                    'repeat(auto-fit,minmax(150px,1fr))',
-
-                  gap:'15px'
-
-                }}
+                key={product.id}
+                className="bg-zinc-900 rounded-2xl p-5 flex justify-between items-center"
               >
 
-                {
+                <div>
 
-                  products.map(product=>(
+                  <h3 className="text-2xl font-bold">
+                    {product.name}
+                  </h3>
 
-                    <div
+                  <p className="text-pink-400 text-xl">
+                    ${product.price}
+                  </p>
 
-                      key={product.id}
-
-                      style={{
-
-                        background:'#111',
-
-                        border:
-                          '1px solid #ff0080',
-
-                        borderRadius:'20px',
-
-                        padding:'20px',
-
-                        textAlign:'center'
-
-                      }}
-                    >
-
-                      <h3>
-                        {product.name}
-                      </h3>
-
-                      <p
-                        style={{
-                          color:'#00ff99',
-                          fontSize:'22px'
-                        }}
-                      >
-                        ${product.price}
-                      </p>
-
-                      <button
-
-                        onClick={()=>
-                          addProduct(product)
-                        }
-
-                        style={addButton}
-
-                      >
-
-                        Agregar
-
-                      </button>
-
-                    </div>
-
-                  ))
-
-                }
-
-              </div>
-
-            </div>
-
-          )
-
-        }
-
-        {
-
-          tab==='ventas' && (
-
-            <div>
-
-              <h2>
-                Ventas Tiempo Real
-              </h2>
-
-              {
-
-                orders.map(order=>(
-
-                  <div
-
-                    key={order.id}
-
-                    style={{
-
-                      background:'#111',
-
-                      borderRadius:'15px',
-
-                      padding:'20px',
-
-                      marginBottom:'15px',
-
-                      border:
-                        '1px solid #ff0080'
-
-                    }}
-                  >
-
-                    <h3>
-                      Cliente #{order.customer_number}
-                    </h3>
-
-                    <p>
-                      Total:
-                      ${order.total}
-                    </p>
-
-                    <p>
-                      Método:
-                      {order.payment_method}
-                    </p>
-
-                    <p>
-                      {
-                        new Date(
-                          order.created_at
-                        ).toLocaleString()
-                      }
-                    </p>
-
-                  </div>
-
-                ))
-
-              }
-
-            </div>
-
-          )
-
-        }
-
-      </div>
-
-      <div
-        style={{
-
-          position:'fixed',
-
-          bottom:0,
-
-          left:0,
-
-          right:0,
-
-          background:'#111',
-
-          padding:'20px',
-
-          borderTop:
-            '2px solid #ff0080'
-
-        }}
-      >
-
-        <h2>
-          Cliente:
-          {' '}
-          {selectedCustomer || 'Ninguno'}
-        </h2>
-
-        {
-
-          cart.map((item,index)=>(
-
-            <div
-
-              key={index}
-
-              style={{
-
-                display:'flex',
-
-                justifyContent:'space-between',
-
-                marginBottom:'10px'
-
-              }}
-            >
-
-              <span>
-                {item.name}
-              </span>
-
-              <div>
-
-                ${item.price}
+                </div>
 
                 <button
-
-                  onClick={()=>
-                    removeProduct(index)
-                  }
-
-                  style={removeButton}
-
+                  onClick={() => addProduct(product)}
+                  className="bg-pink-500 hover:bg-pink-600 px-5 py-3 rounded-xl font-bold"
                 >
-                  X
+                  Agregar
                 </button>
 
               </div>
 
-            </div>
+            ))}
 
-          ))
+          </div>
 
-        }
+        </div>
 
-        <h1
-          style={{
-            color:'#00ff99'
-          }}
-        >
-          TOTAL: ${total}
-        </h1>
+        {/* COBRO */}
 
-        <div
-          style={{
-            display:'flex',
-            gap:'10px'
-          }}
-        >
+        <div>
 
-          <button
-            onClick={()=>pay('Efectivo')}
-            style={payButton}
-          >
-            Efectivo
-          </button>
+          <h2 className="text-3xl font-bold mb-5">
+            Cobro
+          </h2>
 
-          <button
-            onClick={()=>pay('Tarjeta')}
-            style={payButton}
-          >
-            Tarjeta
-          </button>
+          <div className="bg-zinc-900 rounded-2xl p-5 min-h-[700px]">
 
-          <button
-            onClick={()=>pay('Transferencia')}
-            style={payButton}
-          >
-            Transferencia
-          </button>
+            {!selectedTable && (
+
+              <p className="text-zinc-400">
+                Selecciona un cliente
+              </p>
+
+            )}
+
+            {selectedTable && (
+
+              <>
+
+                <h3 className="text-4xl font-black text-pink-500 mb-5">
+                  Cliente #{selectedTable.number}
+                </h3>
+
+                <div className="space-y-3">
+
+                  {selectedTable.items.map((item, index) => (
+
+                    <div
+                      key={index}
+                      className="flex justify-between items-center border-b border-zinc-700 pb-2"
+                    >
+
+                      <div>
+
+                        <span>
+                          {item.name}
+                        </span>
+
+                        <span className="ml-3 text-pink-400">
+                          ${item.price}
+                        </span>
+
+                      </div>
+
+                      {!selectedTable.paid && (
+
+                        <button
+                          onClick={() => removeProduct(index)}
+                          className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg"
+                        >
+                          ❌
+                        </button>
+
+                      )}
+
+                    </div>
+
+                  ))}
+
+                </div>
+
+                <div className="mt-10">
+
+                  <h3 className="text-4xl font-black text-pink-500">
+                    Total:
+                    ${getTotal(selectedTable.items)}
+                  </h3>
+
+                  {!selectedTable.paid && (
+
+                    <div className="space-y-3 mt-5">
+
+                      <button
+                        onClick={() => payTable('Efectivo')}
+                        className="w-full bg-green-500 hover:bg-green-600 py-4 rounded-2xl text-xl font-black"
+                      >
+                        Pago Efectivo
+                      </button>
+
+                      <button
+                        onClick={() => payTable('Tarjeta')}
+                        className="w-full bg-blue-500 hover:bg-blue-600 py-4 rounded-2xl text-xl font-black"
+                      >
+                        Pago Tarjeta
+                      </button>
+
+                      <button
+                        onClick={() => payTable('Transferencia')}
+                        className="w-full bg-purple-500 hover:bg-purple-600 py-4 rounded-2xl text-xl font-black"
+                      >
+                        Transferencia
+                      </button>
+
+                    </div>
+
+                  )}
+
+                  {selectedTable.paid && showQR && (
+
+                    <div className="mt-10 flex flex-col items-center">
+
+                      <div
+                        ref={qrRef}
+                        className="bg-black p-6 rounded-2xl border border-pink-500"
+                      >
+
+                        <h3 className="text-2xl font-black text-green-400 mb-5 text-center">
+                          PAGADO
+                        </h3>
+
+                        <QRCodeSVG
+                          value={qrData}
+                          size={250}
+                          bgColor="#000000"
+                          fgColor="#ffffff"
+                        />
+
+                        <p className="mt-5 text-center">
+                          Cliente #{selectedTable.number}
+                        </p>
+
+                        <p className="text-pink-400 text-center mt-2">
+                          {selectedTable.paymentMethod}
+                        </p>
+
+                        <p className="text-green-400 text-center mt-2">
+                          ${getTotal(selectedTable.items)}
+                        </p>
+
+                      </div>
+
+                      <button
+                        onClick={downloadQR}
+                        className="mt-5 bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-2xl font-black"
+                      >
+                        Descargar QR Imagen
+                      </button>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+              </>
+
+            )}
+
+          </div>
 
         </div>
 
       </div>
 
     </div>
-
   )
-
-}
-
-const tabStyle = {
-
-  flex:1,
-
-  padding:'15px',
-
-  background:'#111',
-
-  border:'none',
-
-  color:'white',
-
-  borderRadius:'12px',
-
-  cursor:'pointer'
-
-}
-
-const activeTab = {
-
-  ...tabStyle,
-
-  background:'#ff0080',
-
-  fontWeight:'bold'
-
-}
-
-const addButton = {
-
-  background:'#ff0080',
-
-  color:'white',
-
-  border:'none',
-
-  padding:'12px',
-
-  borderRadius:'10px',
-
-  cursor:'pointer',
-
-  width:'100%'
-
-}
-
-const payButton = {
-
-  flex:1,
-
-  background:'#ff0080',
-
-  color:'white',
-
-  border:'none',
-
-  padding:'15px',
-
-  borderRadius:'12px',
-
-  fontWeight:'bold',
-
-  cursor:'pointer'
-
-}
-
-const removeButton = {
-
-  marginLeft:'10px',
-
-  background:'red',
-
-  border:'none',
-
-  color:'white',
-
-  borderRadius:'5px',
-
-  cursor:'pointer'
-
 }
