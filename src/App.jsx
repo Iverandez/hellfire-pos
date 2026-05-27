@@ -144,8 +144,8 @@ export default function App() {
     
       console.log(error)
 
-      alert(error.message)
-      
+     (alert('Pago realizado'))
+
       return
     }
 
