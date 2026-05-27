@@ -29,6 +29,12 @@ const products = [
 
 export default function App() {
 
+  const [session, setSession] = useState(null)
+
+  const [email, setEmail] = useState('')
+
+  const [password, setPassword] = useState('')
+
   const [orders, setOrders] = useState([])
 
   const [selectedCustomer, setSelectedCustomer] =
@@ -37,39 +43,94 @@ export default function App() {
   const [customerCarts, setCustomerCarts] =
     useState({})
 
-  const [tab, setTab] = useState('clientes')
+  useEffect(()=>{
+
+    supabase.auth.getSession()
+
+      .then(({ data:{ session } })=>{
+
+        setSession(session)
+
+      })
+
+    const {
+
+      data:{ subscription }
+
+    } = supabase.auth.onAuthStateChange(
+
+      (_event,session)=>{
+
+        setSession(session)
+
+      }
+
+    )
+
+    return ()=>subscription.unsubscribe()
+
+  },[])
 
   useEffect(()=>{
 
-    fetchOrders()
+    if(session){
 
-    const channel = supabase
+      fetchOrders()
 
-      .channel('orders-live')
+      const channel = supabase
 
-      .on(
-        'postgres_changes',
-        {
-          event:'*',
-          schema:'public',
-          table:'orders'
-        },
-        ()=>{
+        .channel('orders-live')
 
-          fetchOrders()
+        .on(
+          'postgres_changes',
+          {
+            event:'*',
+            schema:'public',
+            table:'orders'
+          },
+          ()=>{
 
-        }
-      )
+            fetchOrders()
 
-      .subscribe()
+          }
+        )
 
-    return ()=>{
+        .subscribe()
 
-      supabase.removeChannel(channel)
+      return ()=>{
+
+        supabase.removeChannel(channel)
+
+      }
 
     }
 
-  },[])
+  },[session])
+
+  async function login(){
+
+    const { error } = await supabase.auth
+
+      .signInWithPassword({
+
+        email,
+        password
+
+      })
+
+    if(error){
+
+      alert(error.message)
+
+    }
+
+  }
+
+  async function logout(){
+
+    await supabase.auth.signOut()
+
+  }
 
   async function fetchOrders(){
 
@@ -174,8 +235,6 @@ export default function App() {
 
     if(error){
 
-      console.log(error)
-
       alert(error.message)
 
       return
@@ -194,35 +253,41 @@ export default function App() {
 
   }
 
-  return (
+  if(!session){
 
-    <div
-      style={{
-        minHeight:'100vh',
-        background:'#050505',
-        color:'white',
-        fontFamily:'Arial',
-        paddingBottom:'140px'
-      }}
-    >
+    return (
 
       <div
         style={{
-          padding:'20px'
+
+          minHeight:'100vh',
+
+          background:'#000',
+
+          display:'flex',
+
+          justifyContent:'center',
+
+          alignItems:'center',
+
+          flexDirection:'column',
+
+          color:'white',
+
+          fontFamily:'Arial'
+
         }}
       >
 
         <h1
           style={{
 
-            textAlign:'center',
+            fontSize:'50px',
 
-            fontSize:'45px',
-
-            marginBottom:'20px',
+            marginBottom:'30px',
 
             background:
-              'linear-gradient(90deg,#ff0080,#ff4d00,#8a2be2)',
+              'linear-gradient(90deg,#ff0080,#8a2be2)',
 
             WebkitBackgroundClip:'text',
 
@@ -236,411 +301,309 @@ export default function App() {
         <div
           style={{
 
-            display:'flex',
+            background:'#111',
 
-            gap:'10px',
+            padding:'30px',
 
-            marginBottom:'25px'
+            borderRadius:'20px',
+
+            width:'300px'
 
           }}
         >
 
-          <button
-            onClick={()=>setTab('clientes')}
-            style={
-              tab==='clientes'
-              ? activeTab
-              : tabStyle
+          <input
+
+            placeholder='Correo'
+
+            value={email}
+
+            onChange={e=>
+              setEmail(e.target.value)
             }
-          >
-            Clientes
-          </button>
+
+            style={inputStyle}
+
+          />
+
+          <input
+
+            type='password'
+
+            placeholder='Contraseña'
+
+            value={password}
+
+            onChange={e=>
+              setPassword(e.target.value)
+            }
+
+            style={inputStyle}
+
+          />
 
           <button
-            onClick={()=>setTab('productos')}
-            style={
-              tab==='productos'
-              ? activeTab
-              : tabStyle
-            }
-          >
-            Productos
-          </button>
 
-          <button
-            onClick={()=>setTab('ventas')}
-            style={
-              tab==='ventas'
-              ? activeTab
-              : tabStyle
-            }
+            onClick={login}
+
+            style={loginButton}
+
           >
-            Ventas
+
+            Entrar
+
           </button>
 
         </div>
 
-        {
-
-          tab==='clientes' && (
-
-            <div>
-
-              <h2>
-                Clientes
-              </h2>
-
-              <div
-                style={{
-
-                  display:'grid',
-
-                  gridTemplateColumns:
-                    'repeat(5,1fr)',
-
-                  gap:'10px',
-
-                  maxHeight:'500px',
-
-                  overflowY:'scroll'
-
-                }}
-              >
-
-                {
-
-                  Array.from(
-                    { length:1000 },
-                    (_,i)=>i+1
-                  )
-
-                  .map(number=>(
-
-                    <button
-
-                      key={number}
-
-                      onClick={()=>
-                        setSelectedCustomer(number)
-                      }
-
-                      style={{
-
-                        padding:'20px',
-
-                        borderRadius:'15px',
-
-                        border:'none',
-
-                        cursor:'pointer',
-
-                        fontWeight:'bold',
-
-                        background:
-                          selectedCustomer===number
-                          ? '#ff0080'
-                          : '#111',
-
-                        color:'white'
-
-                      }}
-                    >
-
-                      Cliente {number}
-
-                      <br/>
-
-                      <small>
-
-                        ${
-                          (
-                            customerCarts[number] || []
-                          )
-
-                          .reduce(
-                            (acc,item)=>
-                              acc + item.price,
-                            0
-                          )
-                        }
-
-                      </small>
-
-                    </button>
-
-                  ))
-
-                }
-
-              </div>
-
-            </div>
-
-          )
-
-        }
-
-        {
-
-          tab==='productos' && (
-
-            <div>
-
-              <h2>
-                Productos
-              </h2>
-
-              <div
-                style={{
-
-                  display:'grid',
-
-                  gridTemplateColumns:
-                    'repeat(auto-fit,minmax(150px,1fr))',
-
-                  gap:'15px'
-
-                }}
-              >
-
-                {
-
-                  products.map(product=>(
-
-                    <div
-
-                      key={product.id}
-
-                      style={{
-
-                        background:'#111',
-
-                        border:
-                          '1px solid #ff0080',
-
-                        borderRadius:'20px',
-
-                        padding:'20px',
-
-                        textAlign:'center'
-
-                      }}
-                    >
-
-                      <h3>
-                        {product.name}
-                      </h3>
-
-                      <p
-                        style={{
-                          color:'#00ff99',
-                          fontSize:'22px'
-                        }}
-                      >
-                        ${product.price}
-                      </p>
-
-                      <button
-
-                        onClick={()=>
-                          addProduct(product)
-                        }
-
-                        style={addButton}
-
-                      >
-
-                        Agregar
-
-                      </button>
-
-                    </div>
-
-                  ))
-
-                }
-
-              </div>
-
-            </div>
-
-          )
-
-        }
-
-        {
-
-          tab==='ventas' && (
-
-            <div>
-
-              <h2>
-                Ventas
-              </h2>
-
-              {
-
-                orders.map(order=>(
-
-                  <div
-
-                    key={order.id}
-
-                    style={{
-
-                      background:'#111',
-
-                      borderRadius:'15px',
-
-                      padding:'20px',
-
-                      marginBottom:'15px',
-
-                      border:
-                        '1px solid #ff0080'
-
-                    }}
-                  >
-
-                    <h3>
-                      Cliente #{order.customer_number}
-                    </h3>
-
-                    <p>
-                      Total:
-                      ${order.total}
-                    </p>
-
-                    <p>
-                      Método:
-                      {order.payment_method}
-                    </p>
-
-                  </div>
-
-                ))
-
-              }
-
-            </div>
-
-          )
-
-        }
-
       </div>
+
+    )
+
+  }
+
+  return (
+
+    <div
+      style={{
+        minHeight:'100vh',
+        background:'#050505',
+        color:'white',
+        padding:'20px',
+        fontFamily:'Arial'
+      }}
+    >
 
       <div
         style={{
 
-          position:'fixed',
+          display:'flex',
 
-          bottom:0,
+          justifyContent:'space-between',
 
-          left:0,
-
-          right:0,
-
-          background:'#111',
-
-          padding:'20px',
-
-          borderTop:
-            '2px solid #ff0080'
+          alignItems:'center'
 
         }}
       >
 
-        <h2>
-          Cliente:
-          {' '}
-          {selectedCustomer || 'Ninguno'}
-        </h2>
+        <h1
+          style={{
+            color:'#ff0080'
+          }}
+        >
+          HELLFIRE POS
+        </h1>
+
+        <button
+          onClick={logout}
+          style={logoutButton}
+        >
+          Cerrar sesión
+        </button>
+
+      </div>
+
+      <h2>
+        Cliente {selectedCustomer || 'Ninguno'}
+      </h2>
+
+      <div
+        style={{
+
+          display:'grid',
+
+          gridTemplateColumns:
+            'repeat(5,1fr)',
+
+          gap:'10px',
+
+          maxHeight:'300px',
+
+          overflowY:'scroll'
+
+        }}
+      >
 
         {
 
-          currentCart.map((item,index)=>(
+          Array.from(
+            { length:1000 },
+            (_,i)=>i+1
+          )
 
-            <div
+          .map(number=>(
 
-              key={index}
+            <button
+
+              key={number}
+
+              onClick={()=>
+                setSelectedCustomer(number)
+              }
 
               style={{
 
-                display:'flex',
+                padding:'15px',
 
-                justifyContent:'space-between',
+                border:'none',
 
-                marginBottom:'10px'
+                borderRadius:'10px',
+
+                background:
+                  selectedCustomer===number
+                  ? '#ff0080'
+                  : '#111',
+
+                color:'white'
 
               }}
             >
 
-              <span>
-                {item.name}
-              </span>
+              {number}
 
-              <div>
-
-                ${item.price}
-
-                <button
-
-                  onClick={()=>
-                    removeProduct(index)
-                  }
-
-                  style={removeButton}
-
-                >
-                  X
-                </button>
-
-              </div>
-
-            </div>
+            </button>
 
           ))
 
         }
 
-        <h1
-          style={{
-            color:'#00ff99'
-          }}
+      </div>
+
+      <h2
+        style={{
+          marginTop:'30px'
+        }}
+      >
+        Productos
+      </h2>
+
+      <div
+        style={{
+          display:'flex',
+          gap:'10px',
+          flexWrap:'wrap'
+        }}
+      >
+
+        {
+
+          products.map(product=>(
+
+            <button
+
+              key={product.id}
+
+              onClick={()=>
+                addProduct(product)
+              }
+
+              style={productButton}
+
+            >
+
+              {product.name}
+
+              <br/>
+
+              ${product.price}
+
+            </button>
+
+          ))
+
+        }
+
+      </div>
+
+      <h2
+        style={{
+          marginTop:'30px'
+        }}
+      >
+        Consumo
+      </h2>
+
+      {
+
+        currentCart.map((item,index)=>(
+
+          <div
+
+            key={index}
+
+            style={{
+
+              display:'flex',
+
+              justifyContent:'space-between',
+
+              background:'#111',
+
+              padding:'10px',
+
+              borderRadius:'10px',
+
+              marginTop:'10px'
+
+            }}
+          >
+
+            <span>
+              {item.name}
+            </span>
+
+            <div>
+
+              ${item.price}
+
+              <button
+
+                onClick={()=>
+                  removeProduct(index)
+                }
+
+                style={removeButton}
+
+              >
+                X
+              </button>
+
+            </div>
+
+          </div>
+
+        ))
+
+      }
+
+      <h1
+        style={{
+          color:'#00ff99'
+        }}
+      >
+        TOTAL: ${total}
+      </h1>
+
+      <div
+        style={{
+          display:'flex',
+          gap:'10px'
+        }}
+      >
+
+        <button
+          onClick={()=>pay('Efectivo')}
+          style={payButton}
         >
-          TOTAL: ${total}
-        </h1>
+          Efectivo
+        </button>
 
-        <div
-          style={{
-            display:'flex',
-            gap:'10px'
-          }}
+        <button
+          onClick={()=>pay('Tarjeta')}
+          style={payButton}
         >
-
-          <button
-            onClick={()=>pay('Efectivo')}
-            style={payButton}
-          >
-            Efectivo
-          </button>
-
-          <button
-            onClick={()=>pay('Tarjeta')}
-            style={payButton}
-          >
-            Tarjeta
-          </button>
-
-          <button
-            onClick={()=>pay('Transferencia')}
-            style={payButton}
-          >
-            Transferencia
-          </button>
-
-        </div>
+          Tarjeta
+        </button>
 
       </div>
 
@@ -650,49 +613,69 @@ export default function App() {
 
 }
 
-const tabStyle = {
+const inputStyle = {
 
-  flex:1,
+  width:'100%',
 
   padding:'15px',
 
-  background:'#111',
+  marginBottom:'15px',
+
+  borderRadius:'10px',
 
   border:'none',
 
-  color:'white',
+  background:'#222',
 
-  borderRadius:'12px',
+  color:'white'
+
+}
+
+const loginButton = {
+
+  width:'100%',
+
+  padding:'15px',
+
+  border:'none',
+
+  borderRadius:'10px',
+
+  background:'#ff0080',
+
+  color:'white',
 
   cursor:'pointer'
 
 }
 
-const activeTab = {
+const logoutButton = {
 
-  ...tabStyle,
-
-  background:'#ff0080',
-
-  fontWeight:'bold'
-
-}
-
-const addButton = {
-
-  background:'#ff0080',
-
-  color:'white',
+  padding:'10px 20px',
 
   border:'none',
 
-  padding:'12px',
-
   borderRadius:'10px',
 
-  cursor:'pointer',
+  background:'red',
 
-  width:'100%'
+  color:'white',
+
+  cursor:'pointer'
+
+}
+
+const productButton = {
+
+  background:'#111',
+
+  border:'1px solid #ff0080',
+
+  color:'white',
+
+  padding:'20px',
+
+  borderRadius:'15px'
 
 }
 
@@ -700,17 +683,15 @@ const payButton = {
 
   flex:1,
 
-  background:'#ff0080',
-
-  color:'white',
+  padding:'15px',
 
   border:'none',
 
-  padding:'15px',
+  borderRadius:'10px',
 
-  borderRadius:'12px',
+  background:'#ff0080',
 
-  fontWeight:'bold',
+  color:'white',
 
   cursor:'pointer'
 
@@ -722,12 +703,10 @@ const removeButton = {
 
   background:'red',
 
-  border:'none',
-
   color:'white',
 
-  borderRadius:'5px',
+  border:'none',
 
-  cursor:'pointer'
+  borderRadius:'5px'
 
 }
