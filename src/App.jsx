@@ -34,8 +34,7 @@ export default function App() {
   const [selectedCustomer, setSelectedCustomer] =
     useState(null)
 
-  const [customerCarts, setCustomerCarts] =
-    useState({})
+  const [cart, setCart] = useState([])
 
   const [tab, setTab] = useState('clientes')
 
@@ -85,52 +84,26 @@ export default function App() {
 
   }
 
-  const currentCart =
-    customerCarts[selectedCustomer] || []
-
   function addProduct(product){
 
-    if(!selectedCustomer){
-
-      alert('Selecciona cliente')
-
-      return
-
-    }
-
-    setCustomerCarts(prev=>({
-
+    setCart(prev=>[
       ...prev,
-
-      [selectedCustomer]:[
-
-        ...(prev[selectedCustomer] || []),
-
-        product
-
-      ]
-
-    }))
+      product
+    ])
 
   }
 
   function removeProduct(index){
 
-    const updated = [...currentCart]
+    const updated = [...cart]
 
     updated.splice(index,1)
 
-    setCustomerCarts(prev=>({
-
-      ...prev,
-
-      [selectedCustomer]:updated
-
-    }))
+    setCart(updated)
 
   }
 
-  const total = currentCart.reduce(
+  const total = cart.reduce(
 
     (acc,item)=>acc + item.price,
 
@@ -147,9 +120,9 @@ export default function App() {
 
     }
 
-    if(currentCart.length===0){
+    if(cart.length===0){
 
-      alert('No hay productos')
+      alert('Agrega productos')
       return
 
     }
@@ -162,7 +135,7 @@ export default function App() {
 
         customer_number:selectedCustomer,
 
-        items:currentCart,
+        items:cart,
 
         total,
 
@@ -184,13 +157,7 @@ export default function App() {
 
     alert('Pago realizado')
 
-    setCustomerCarts(prev=>({
-
-      ...prev,
-
-      [selectedCustomer]:[]
-
-    }))
+    setCart([])
 
   }
 
@@ -202,7 +169,7 @@ export default function App() {
         background:'#050505',
         color:'white',
         fontFamily:'Arial',
-        paddingBottom:'140px'
+        paddingBottom:'120px'
       }}
     >
 
@@ -287,7 +254,7 @@ export default function App() {
             <div>
 
               <h2>
-                Clientes
+                Selecciona Cliente
               </h2>
 
               <div
@@ -332,9 +299,9 @@ export default function App() {
 
                         border:'none',
 
-                        cursor:'pointer',
-
                         fontWeight:'bold',
+
+                        cursor:'pointer',
 
                         background:
                           selectedCustomer===number
@@ -347,24 +314,6 @@ export default function App() {
                     >
 
                       Cliente {number}
-
-                      <br/>
-
-                      <small>
-
-                        ${
-                          (
-                            customerCarts[number] || []
-                          )
-
-                          .reduce(
-                            (acc,item)=>
-                              acc + item.price,
-                            0
-                          )
-                        }
-
-                      </small>
 
                     </button>
 
@@ -475,7 +424,7 @@ export default function App() {
             <div>
 
               <h2>
-                Ventas
+                Ventas Tiempo Real
               </h2>
 
               {
@@ -514,6 +463,14 @@ export default function App() {
                     <p>
                       Método:
                       {order.payment_method}
+                    </p>
+
+                    <p>
+                      {
+                        new Date(
+                          order.created_at
+                        ).toLocaleString()
+                      }
                     </p>
 
                   </div>
@@ -559,7 +516,7 @@ export default function App() {
 
         {
 
-          currentCart.map((item,index)=>(
+          cart.map((item,index)=>(
 
             <div
 
