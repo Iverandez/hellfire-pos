@@ -141,11 +141,11 @@ export default function App() {
         }])
 
     if(error){
-
+    
       console.log(error)
 
-      alert('Error guardando venta')
-
+      alert(error.message)
+      
       return
     }
 
