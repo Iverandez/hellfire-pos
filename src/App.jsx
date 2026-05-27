@@ -1,35 +1,26 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
+const products = [
+
+  { id:1, name:'Entrada', price:100 },
+
+  { id:2, name:'Barra Libre', price:300 },
+
+  { id:3, name:'Cerveza', price:80 },
+
+  { id:4, name:'Sky', price:50 },
+
+]
+
 export default function App() {
 
   const [orders, setOrders] = useState([])
-  const [selectedCustomer, setSelectedCustomer] = useState(null)
+
+  const [selectedCustomer, setSelectedCustomer] =
+    useState(null)
+
   const [cart, setCart] = useState([])
-
-  const products = [
-
-    { id:1, name:'Entrada', price:100 },
-
-    { id:2, name:'Barra Libre', price:300 },
-
-    { id:3, name:'Cerveza Lata', price:80 },
-
-    { id:4, name:'Caribe', price:60 },
-
-    { id:5, name:'Sky', price:50 },
-
-    { id:6, name:'Cigarros', price:10 },
-
-    { id:7, name:'Perla Negra', price:200 },
-
-    { id:8, name:'Mojito', price:150 },
-
-    { id:9, name:'Paleta', price:5 },
-
-    { id:10, name:'Poppers', price:350 },
-
-  ]
 
   useEffect(()=>{
 
@@ -79,7 +70,10 @@ export default function App() {
 
   function addProduct(product){
 
-    setCart(prev=>[...prev,product])
+    setCart(prev=>[
+      ...prev,
+      product
+    ])
 
   }
 
@@ -94,55 +88,80 @@ export default function App() {
   }
 
   const total = cart.reduce(
+
     (acc,item)=>acc + item.price,
+
     0
+
   )
 
   async function pay(method){
 
-    if(!selectedCustomer){
+    try {
 
-      alert('Selecciona cliente')
-      return
+      if(!selectedCustomer){
 
-    }
+        alert('Selecciona cliente')
 
-    if(cart.length===0){
+        return
 
-      alert('Agrega productos')
-      return
+      }
 
-    }
+      if(cart.length===0){
 
-    const { error } = await supabase
+        alert('Agrega productos')
 
-      .from('orders')
+        return
 
-      .insert([{
+      }
 
-        customer_number:selectedCustomer,
+      const orderData = {
+
+        customer_number:Number(selectedCustomer),
 
         items:cart,
 
-        total,
+        total:Number(total),
 
-        payment_method:method,
+        payment_method:String(method),
 
         paid:true
 
-      }])
+      }
 
-    if(error){
+      const { data, error } = await supabase
 
-      console.log(error)
-      alert('Error guardando venta')
-      return
+        .from('orders')
+
+        .insert([orderData])
+
+        .select()
+
+      if(error){
+
+        console.log(error)
+
+        alert(error.message)
+
+        return
+
+      }
+
+      console.log(data)
+
+      alert('Pago realizado')
+
+      setCart([])
 
     }
 
-    alert('Pago realizado')
+    catch(err){
 
-    setCart([])
+      console.log(err)
+
+      alert(err.message)
+
+    }
 
   }
 
@@ -153,35 +172,20 @@ export default function App() {
         minHeight:'100vh',
         background:'#000',
         color:'white',
-        padding:'20px',
-        fontFamily:'Arial'
+        padding:'20px'
       }}
     >
 
       <h1
         style={{
-
-          fontSize:'55px',
-
-          textAlign:'center',
-
-          marginBottom:'20px',
-
-          background:
-            'linear-gradient(90deg,#ff0080,#ff4d00,#8a2be2)',
-
-          WebkitBackgroundClip:'text',
-
-          WebkitTextFillColor:'transparent',
-
-          fontWeight:'bold'
-
+          fontSize:'50px',
+          color:'#ff0080'
         }}
       >
         HELLFIRE POS
       </h1>
 
-      <h2 style={{ color:'#ff0080' }}>
+      <h2>
         Clientes
       </h2>
 
@@ -195,11 +199,9 @@ export default function App() {
 
           gap:'10px',
 
-          maxHeight:'420px',
+          maxHeight:'300px',
 
-          overflowY:'scroll',
-
-          marginBottom:'30px'
+          overflowY:'scroll'
 
         }}
       >
@@ -225,20 +227,16 @@ export default function App() {
 
                 padding:'15px',
 
-                border:'1px solid #ff0080',
+                border:'none',
 
-                borderRadius:'12px',
+                borderRadius:'10px',
 
                 background:
                   selectedCustomer===number
                   ? '#ff0080'
                   : '#111',
 
-                color:'white',
-
-                cursor:'pointer',
-
-                fontWeight:'bold'
+                color:'white'
 
               }}
             >
@@ -253,21 +251,19 @@ export default function App() {
 
       </div>
 
-      <h2 style={{ color:'#ff0080' }}>
+      <h2
+        style={{
+          marginTop:'30px'
+        }}
+      >
         Productos
       </h2>
 
       <div
         style={{
-
           display:'flex',
-
-          flexWrap:'wrap',
-
-          gap:'12px',
-
-          marginBottom:'30px'
-
+          gap:'10px',
+          flexWrap:'wrap'
         }}
       >
 
@@ -287,24 +283,19 @@ export default function App() {
 
                 background:'#111',
 
-                border:'1px solid #ff0080',
-
-                borderRadius:'15px',
-
                 color:'white',
 
-                padding:'20px',
+                border:
+                  '1px solid #ff0080',
 
-                width:'140px',
+                borderRadius:'10px',
 
-                cursor:'pointer'
+                padding:'20px'
 
               }}
             >
 
-              <strong>
-                {product.name}
-              </strong>
+              {product.name}
 
               <br/>
 
@@ -318,7 +309,11 @@ export default function App() {
 
       </div>
 
-      <h2 style={{ color:'#ff0080' }}>
+      <h2
+        style={{
+          marginTop:'30px'
+        }}
+      >
         Cliente #{selectedCustomer}
       </h2>
 
@@ -332,19 +327,17 @@ export default function App() {
 
             style={{
 
-              background:'#111',
-
-              padding:'15px',
-
-              borderRadius:'12px',
-
-              marginBottom:'10px',
-
               display:'flex',
 
               justifyContent:'space-between',
 
-              alignItems:'center'
+              background:'#111',
+
+              padding:'15px',
+
+              borderRadius:'10px',
+
+              marginTop:'10px'
 
             }}
           >
@@ -364,26 +357,14 @@ export default function App() {
                 }
 
                 style={{
-
-                  marginLeft:'15px',
-
+                  marginLeft:'10px',
                   background:'red',
-
-                  border:'none',
-
-                  borderRadius:'8px',
-
                   color:'white',
-
-                  padding:'5px 10px',
-
-                  cursor:'pointer'
-
+                  border:'none',
+                  borderRadius:'5px'
                 }}
               >
-
                 X
-
               </button>
 
             </div>
@@ -396,6 +377,7 @@ export default function App() {
 
       <h1
         style={{
+          marginTop:'20px',
           color:'#00ff99'
         }}
       >
@@ -405,35 +387,35 @@ export default function App() {
       <div
         style={{
           display:'flex',
-          gap:'15px',
-          marginBottom:'40px'
+          gap:'10px'
         }}
       >
 
         <button
           onClick={()=>pay('Efectivo')}
-          style={buttonStyle}
         >
           Efectivo
         </button>
 
         <button
           onClick={()=>pay('Tarjeta')}
-          style={buttonStyle}
         >
           Tarjeta
         </button>
 
         <button
           onClick={()=>pay('Transferencia')}
-          style={buttonStyle}
         >
           Transferencia
         </button>
 
       </div>
 
-      <h2 style={{ color:'#ff0080' }}>
+      <h2
+        style={{
+          marginTop:'40px'
+        }}
+      >
         Ventas Tiempo Real
       </h2>
 
@@ -449,34 +431,27 @@ export default function App() {
 
               background:'#111',
 
-              border:'1px solid #ff0080',
-
-              borderRadius:'15px',
-
               padding:'20px',
 
-              marginBottom:'15px'
+              borderRadius:'10px',
+
+              marginTop:'10px'
 
             }}
           >
 
-            <h3>
-              Cliente #{order.customer_number}
-            </h3>
+            Cliente:
+            #{order.customer_number}
 
-            <p>
-              Total: ${order.total}
-            </p>
+            <br/>
 
-            <p>
-              Método: {order.payment_method}
-            </p>
+            Total:
+            ${order.total}
 
-            <p>
-              {new Date(
-                order.created_at
-              ).toLocaleString()}
-            </p>
+            <br/>
+
+            Método:
+            {order.payment_method}
 
           </div>
 
@@ -487,23 +462,5 @@ export default function App() {
     </div>
 
   )
-
-}
-
-const buttonStyle = {
-
-  background:'#ff0080',
-
-  border:'none',
-
-  borderRadius:'12px',
-
-  color:'white',
-
-  padding:'15px 25px',
-
-  fontWeight:'bold',
-
-  cursor:'pointer'
 
 }
