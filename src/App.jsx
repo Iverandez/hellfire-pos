@@ -21,11 +21,15 @@ export default function App() {
 
   const qrRef = useRef()
 
-  const [tables, setTables] = useState([])
+   const [tables, setTables] = useState([])
 
-  const selectedTable = tables.find(
+   const [selectedTableId, setSelectedTableId] =
+   useState(null)
+
+    const selectedTable = tables.find(
   table => table.id === selectedTableId
 )
+
   const [showQR, setShowQR] = useState(false)
 
   const products = [
@@ -156,13 +160,7 @@ async function fetchTables(){
 
   }
 
-  setSelectedTableId({
-
-    ...selectedTable,
-
-    items: updatedItems
-
-  })
+  fetchTables()
 
 }
 
@@ -235,19 +233,7 @@ PAGADO
 
     : ''
 
- function getTotal(items){
-
-  if(!items) return 0
-
-  return items.reduce(
-
-    (sum,item)=>sum + item.price,
-
-    0
-
-  )
-
-} return (
+  return (
 
     <div className="min-h-screen bg-black text-white">
 
@@ -304,8 +290,8 @@ PAGADO
                   key={table.id}
 
                   onClick={()=>
-                    setSelectedTableId(table)
-                  }
+  setSelectedTableId(table.id)
+}
 
                   className={`p-5 rounded-2xl
 
@@ -441,7 +427,7 @@ PAGADO
 
                     {
 
-                      selectedTable.items.map(
+                      (selectedTable?.items || []).map(
                         (item,index)=>(
 
                           <div
