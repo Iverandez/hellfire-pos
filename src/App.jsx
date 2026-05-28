@@ -48,6 +48,7 @@ console.log(selectedTable)
     { id: 11, name: 'Maruchan', price: 25 },
     { id: 12, name: 'Paleta', price: 5 },
     { id: 13, name: 'Condones', price: 0 },
+    { id: 14, name: 'Agua', price: 10 },
 
   ]
 
