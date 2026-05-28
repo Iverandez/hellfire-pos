@@ -165,25 +165,37 @@ async function fetchTables(){
 
 }
 
-  async function payTable(method){
+async function payTable(method){
 
-    await supabase
+  if(!selectedTable) return
 
-      .from('tables')
+  const total = getTotal(selectedTable.items)
 
-      .update({
+  // Guardar venta en historial
+  await supabase
+    .from('sales')
+    .insert([{
+      table_number: selectedTable.number,
+      items: selectedTable.items,
+      total: total,
+      payment_method: method
+    }])
 
-        paid:true,
+  // Liberar SOLO ese cliente
+  await supabase
+    .from('tables')
+    .update({
 
-        payment_method:method
+      items: [],
+      paid: false,
+      payment_method: ''
 
-      })
+    })
+    .eq('id', selectedTable.id)
 
-      .eq('id',selectedTable.id)
+  setShowQR(false)
 
-    setShowQR(true)
-
-  }
+}
 
   async function resetTable(){
 
