@@ -5,6 +5,20 @@ import { toPng } from 'html-to-image'
 
 export default function App() {
 
+  function getTotal(items){
+
+  if(!items) return 0
+
+  return items.reduce(
+
+    (sum,item)=>sum + item.price,
+
+    0
+
+  )
+
+}
+
   const qrRef = useRef()
 
   const [tables, setTables] = useState([])
@@ -113,24 +127,44 @@ async function fetchTables(){
 
   async function removeProduct(index){
 
-    const updatedItems =
-      selectedTable.items.filter(
-        (_,i)=>i!==index
-      )
+  if(!selectedTable) return
 
-    await supabase
+  const updatedItems =
+    selectedTable.items.filter(
+      (_,i)=>i !== index
+    )
 
-      .from('tables')
+  const { error } = await supabase
 
-      .update({
+    .from('tables')
 
-        items:updatedItems
+    .update({
 
-      })
+      items: updatedItems
 
-      .eq('id',selectedTable.id)
+    })
+
+    .eq('id', selectedTable.id)
+
+  if(error){
+
+    console.log(error)
+
+    alert(error.message)
+
+    return
 
   }
+
+  setSelectedTable({
+
+    ...selectedTable,
+
+    items: updatedItems
+
+  })
+
+}
 
   async function payTable(method){
 
