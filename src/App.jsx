@@ -23,9 +23,9 @@ export default function App() {
 
   const [tables, setTables] = useState([])
 
-  const [selectedTable, setSelectedTable] =
-    useState(null)
-
+  const selectedTable = tables.find(
+  table => table.id === selectedTableId
+)
   const [showQR, setShowQR] = useState(false)
 
   const products = [
@@ -156,7 +156,7 @@ async function fetchTables(){
 
   }
 
-  setSelectedTable({
+  setSelectedTableId({
 
     ...selectedTable,
 
@@ -304,7 +304,7 @@ PAGADO
                   key={table.id}
 
                   onClick={()=>
-                    setSelectedTable(table)
+                    setSelectedTableId(table)
                   }
 
                   className={`p-5 rounded-2xl
