@@ -30,6 +30,8 @@ export default function App() {
   table => table.id === selectedTableId
 )
 
+console.log(selectedTable)
+
   const [showQR, setShowQR] = useState(false)
 
   const products = [
@@ -109,12 +111,11 @@ async function fetchTables(){
 
     const updatedItems = [
 
-      ...selectedTable.items,
+  ...(selectedTable.items || []),
 
-      product
+  product
 
-    ]
-
+]
     await supabase
 
       .from('tables')
@@ -134,7 +135,7 @@ async function fetchTables(){
   if(!selectedTable) return
 
   const updatedItems =
-    selectedTable.items.filter(
+    (selectedTable.items || []).filter(
       (_,i)=>i !== index
     )
 
@@ -227,7 +228,7 @@ async function fetchTables(){
     ? `
 CLIENTE ${selectedTable.number}
 TOTAL ${getTotal(selectedTable.items)}
-METODO ${selectedTable.payment_method}
+METODO ${selectedTable?.payment_method || ''}
 PAGADO
 `
 
@@ -370,7 +371,7 @@ PAGADO
                   <h2 className="text-4xl font-black text-green-400">
 
                     ${
-                      getTotal(selectedTable.items)
+                      getTotal(selectedTable?.items || [])
                     }
 
                   </h2>
@@ -488,7 +489,7 @@ PAGADO
 
                   {
 
-                    !selectedTable.paid && (
+                    !selectedTable?.paid && (
 
                       <div className="grid grid-cols-3 gap-3 mt-6">
 
