@@ -2,40 +2,35 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from './supabase'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
+import Login from './Login'
 
 export default function App() {
 
   function getTotal(items){
 
-  if(!items) return 0
+    if(!items) return 0
 
-  return items.reduce(
+    return items.reduce(
+      (sum,item)=>sum + item.price,
+      0
+    )
 
-    (sum,item)=>sum + item.price,
-
-    0
-
-  )
-
-}
+  }
 
   const qrRef = useRef()
 
-   const [tables, setTables] = useState([])
-
-   const [selectedTableId, setSelectedTableId] =
-   useState(null)
-
-    const selectedTable = tables.find(
-  table => table.id === selectedTableId
-)
-
-console.log(selectedTable)
-
+  const [tables, setTables] = useState([])
+  const [selectedTableId, setSelectedTableId] = useState(null)
   const [showQR, setShowQR] = useState(false)
+  const [session,setSession] = useState(null)
+
+  const selectedTable = tables.find(
+    table => table.id === selectedTableId
+  )
 
   const products = [
-{ id: 1, name: 'Entrada', price: 100 },
+
+    { id: 1, name: 'Entrada', price: 100 },
     { id: 2, name: 'Barra Libre', price: 300 },
     { id: 3, name: 'Cerveza Lata', price: 60 },
     { id: 4, name: 'Caribe', price: 60 },
@@ -52,7 +47,23 @@ console.log(selectedTable)
 
   ]
 
-   useEffect(()=>{
+  useEffect(()=>{
+
+    supabase.auth.getSession()
+
+      .then(({ data:{ session } })=>{
+
+        setSession(session)
+
+      })
+
+    supabase.auth.onAuthStateChange(
+      (_event,session)=>{
+
+        setSession(session)
+
+      }
+    )
 
     fetchTables()
 
@@ -84,31 +95,27 @@ console.log(selectedTable)
 
   },[])
 
-async function fetchTables(){
+  async function fetchTables(){
 
-  const { data, error } = await supabase
+    const { data, error } = await supabase
 
-    .from('tables')
+      .from('tables')
 
-    .select('*')
+      .select('*')
 
-    .order('number', { ascending:true })
+      .order('number', { ascending:true })
 
-  console.log('DATA:', data)
+    if(error){
 
-  console.log('ERROR:', error)
+      alert(error.message)
 
-  if(error){
+      return
 
-    alert(error.message)
+    }
 
-    return
+    setTables(data)
 
   }
-
-  setTables(data)
-
-}
 
   async function addProduct(product){
 
@@ -116,11 +123,12 @@ async function fetchTables(){
 
     const updatedItems = [
 
-  ...(selectedTable.items || []),
+      ...(selectedTable.items || []),
 
-  product
+      product
 
-]
+    ]
+
     await supabase
 
       .from('tables')
@@ -137,72 +145,81 @@ async function fetchTables(){
 
   async function removeProduct(index){
 
-  if(!selectedTable) return
+    if(!selectedTable) return
 
-  const updatedItems =
-    (selectedTable.items || []).filter(
-      (_,i)=>i !== index
-    )
+    const updatedItems =
+      (selectedTable.items || []).filter(
+        (_,i)=>i !== index
+      )
 
-  const { error } = await supabase
+    const { error } = await supabase
 
-    .from('tables')
+      .from('tables')
 
-    .update({
+      .update({
 
-      items: updatedItems
+        items: updatedItems
 
-    })
+      })
 
-    .eq('id', selectedTable.id)
+      .eq('id', selectedTable.id)
 
-  if(error){
+    if(error){
 
-    console.log(error)
+      alert(error.message)
 
-    alert(error.message)
+      return
 
-    return
+    }
+
+    fetchTables()
 
   }
 
-  fetchTables()
+  async function payTable(method){
 
-}
+    if(!selectedTable) return
 
-async function payTable(method){
+    const total =
+      getTotal(selectedTable.items)
 
-  if(!selectedTable) return
+    await supabase
 
-  const total = getTotal(selectedTable.items)
+      .from('sales')
 
-  // Guardar venta en historial
-  await supabase
-    .from('sales')
-    .insert([{
-      table_number: selectedTable.number,
-      items: selectedTable.items,
-      total: total,
-      payment_method: method
-    }])
+      .insert([{
 
-  // Liberar SOLO ese cliente
-  await supabase
-    .from('tables')
-    .update({
+        table_number: selectedTable.number,
 
-      items: [],
-      paid: false,
-      payment_method: ''
+        items: selectedTable.items,
 
-    })
-    .eq('id', selectedTable.id)
+        total: total,
 
-  setShowQR(false)
+        payment_method: method
 
-}
+      }])
+
+    await supabase
+
+      .from('tables')
+
+      .update({
+
+        paid:true,
+
+        payment_method:method
+
+      })
+
+      .eq('id',selectedTable.id)
+
+    setShowQR(true)
+
+  }
 
   async function resetTable(){
+
+    if(!selectedTable) return
 
     await supabase
 
@@ -251,35 +268,63 @@ PAGADO
 
     : ''
 
+  if(!session){
+
+    return <Login />
+
+  }
+
   return (
 
     <div className="min-h-screen bg-black text-white">
 
-      <div className="p-6 border-b border-zinc-800 flex justify-between">
-
-        <h1 className="text-5xl font-black text-pink-500">
-
-          HELLFIRE POS
-
-        </h1>
+      <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
 
         <div>
 
-          <p className="text-zinc-400">
-            Cliente
-          </p>
+          <h1 className="text-5xl font-black text-pink-500">
 
-          <h2 className="text-3xl font-black text-green-400">
+            HELLFIRE POS
 
-            {
+          </h1>
 
-              selectedTable
-              ? `#${selectedTable.number}`
-              : 'Ninguno'
+        </div>
 
+        <div className="flex items-center gap-4">
+
+          <div>
+
+            <p className="text-zinc-400">
+              Cliente
+            </p>
+
+            <h2 className="text-3xl font-black text-green-400">
+
+              {
+
+                selectedTable
+                ? `#${selectedTable.number}`
+                : 'Ninguno'
+
+              }
+
+            </h2>
+
+          </div>
+
+          <button
+
+            onClick={()=>
+              supabase.auth.signOut()
             }
 
-          </h2>
+            className="bg-red-500 hover:bg-red-600 px-5 py-3 rounded-2xl font-black"
+
+          >
+
+            Salir
+
+          </button>
 
         </div>
 
@@ -308,8 +353,8 @@ PAGADO
                   key={table.id}
 
                   onClick={()=>
-  setSelectedTableId(table.id)
-}
+                    setSelectedTableId(table.id)
+                  }
 
                   className={`p-5 rounded-2xl
 
@@ -472,27 +517,19 @@ PAGADO
 
                             </div>
 
-                            {
+                            <button
 
-                              !selectedTable.paid && (
+                              onClick={()=>
+                                removeProduct(index)
+                              }
 
-                                <button
+                              className="bg-red-500 px-4 rounded-xl"
 
-                                  onClick={()=>
-                                    removeProduct(index)
-                                  }
+                            >
 
-                                  className="bg-red-500 px-4 rounded-xl"
+                              X
 
-                                >
-
-                                  X
-
-                                </button>
-
-                              )
-
-                            }
+                            </button>
 
                           </div>
 
@@ -504,72 +541,61 @@ PAGADO
 
                   </div>
 
-                  {
+                  <div className="grid grid-cols-3 gap-3 mt-6">
 
-                    !selectedTable?.paid && (
+                    <button
 
-                      <div className="grid grid-cols-3 gap-3 mt-6">
+                      onClick={()=>
+                        payTable('Efectivo')
+                      }
 
-                        <button
+                      className="bg-green-500 py-4 rounded-2xl font-black"
 
-                          onClick={()=>
-                            payTable('Efectivo')
-                          }
+                    >
 
-                          className="bg-green-500 py-4 rounded-2xl font-black"
+                      Efectivo
 
-                        >
+                    </button>
 
-                          Efectivo
+                    <button
 
-                        </button>
+                      onClick={()=>
+                        payTable('Tarjeta')
+                      }
 
-                        <button
+                      className="bg-blue-500 py-4 rounded-2xl font-black"
 
-                          onClick={()=>
-                            payTable('Tarjeta')
-                          }
+                    >
 
-                          className="bg-blue-500 py-4 rounded-2xl font-black"
+                      Tarjeta
 
-                        >
+                    </button>
 
-                          Tarjeta
+                    <button
 
-                        </button>
+                      onClick={()=>
+                        payTable('Transferencia')
+                      }
 
-                        <button
+                      className="bg-purple-500 py-4 rounded-2xl font-black"
 
-                          onClick={()=>
-                            payTable('Transferencia')
-                          }
+                    >
 
-                          className="bg-purple-500 py-4 rounded-2xl font-black"
+                      Transferencia
 
-                        >
+                    </button>
 
-                          Transferencia
-
-                        </button>
-
-                      </div>
-
-                    )
-
-                  }
+                  </div>
 
                   {
 
-                    selectedTable.paid && showQR && (
+                    selectedTable?.paid && showQR && (
 
                       <div className="mt-10 flex flex-col items-center">
 
                         <div
-
                           ref={qrRef}
-
                           className="bg-black p-6 rounded-2xl border border-pink-500"
-
                         >
 
                           <QRCodeSVG
