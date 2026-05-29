@@ -1,105 +1,98 @@
 import { useState } from 'react'
 import { supabase } from './supabase'
 
-export default function Login({ onLogin }) {
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+export default function Login(){
 
-  async function handleLogin(e) {
+  const [email,setEmail] = useState('')
+  const [password,setPassword] = useState('')
+  const [loading,setLoading] = useState(false)
 
-    e.preventDefault()
+  async function signIn(){
 
-    const { data, error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+    setLoading(true)
 
-    if (error) {
-      setError(error.message)
-      return
+    const { error } = await supabase.auth.signInWithPassword({
+
+      email,
+      password
+
+    })
+
+    if(error){
+
+      alert(error.message)
+
     }
 
-    onLogin(data.user)
+    setLoading(false)
+
   }
 
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'black',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}
-    >
+  return(
 
-      <form
-        onSubmit={handleLogin}
-        style={{
-          background: '#111',
-          padding: 30,
-          borderRadius: 20,
-          width: 320
-        }}
-      >
+    <div className="min-h-screen bg-black flex items-center justify-center">
 
-        <h1
-          style={{
-            color: '#ff0080',
-            textAlign: 'center'
-          }}
-        >
-          HELLFIRE LOGIN
+      <div className="bg-zinc-900 p-10 rounded-3xl w-full max-w-md border border-pink-500">
+
+        <h1 className="text-5xl font-black text-pink-500 text-center mb-10">
+
+          HELLFIRE
+
         </h1>
 
         <input
+
           type="email"
+
           placeholder="Correo"
+
           value={email}
+
           onChange={(e)=>setEmail(e.target.value)}
-          style={{
-            width:'100%',
-            padding:12,
-            marginTop:20
-          }}
+
+          className="w-full bg-black border border-zinc-700 p-4 rounded-2xl mb-4 text-white"
+
         />
 
         <input
+
           type="password"
+
           placeholder="Contraseña"
+
           value={password}
+
           onChange={(e)=>setPassword(e.target.value)}
-          style={{
-            width:'100%',
-            padding:12,
-            marginTop:10
-          }}
+
+          className="w-full bg-black border border-zinc-700 p-4 rounded-2xl mb-6 text-white"
+
         />
 
         <button
-          type="submit"
-          style={{
-            width:'100%',
-            padding:14,
-            marginTop:20,
-            background:'#ff0080',
-            color:'white',
-            border:'none',
-            borderRadius:10
-          }}
+
+          onClick={signIn}
+
+          disabled={loading}
+
+          className="w-full bg-pink-500 hover:bg-pink-600 py-4 rounded-2xl font-black text-xl"
+
         >
-          Entrar
+
+          {
+
+            loading
+            ? 'Entrando...'
+            : 'Entrar'
+
+          }
+
         </button>
 
-        <p style={{ color:'red' }}>
-          {error}
-        </p>
-
-      </form>
+      </div>
 
     </div>
+
   )
+
 }
