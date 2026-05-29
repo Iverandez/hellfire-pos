@@ -35,7 +35,7 @@ export default function App() {
     { id: 3, name: 'Cerveza Lata', price: 60 },
     { id: 4, name: 'Caribe', price: 60 },
     { id: 5, name: 'Sky', price: 80 },
-    { id: 6, name: 'New Mix', price: 250 },
+    { id: 6, name: 'New Mix', price: 50 },
     { id: 7, name: 'Servicio Extra', price: 150 },
     { id: 8, name: 'Poppers', price: 350 },
     { id: 9, name: 'Cigarros', price: 10 },
