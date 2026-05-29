@@ -36,14 +36,15 @@ export default function App() {
     { id: 4, name: 'Caribe', price: 60 },
     { id: 5, name: 'Sky', price: 80 },
     { id: 6, name: 'New Mix', price: 50 },
-    { id: 7, name: 'Perla Negra / Mojito', price: 200 - 150 },
-    { id: 8, name: 'Poppers', price: 350 },
-    { id: 9, name: 'Cigarros', price: 10 },
-    { id: 10, name: 'Papas', price: 15 },
-    { id: 11, name: 'Maruchan', price: 25 },
-    { id: 12, name: 'Paleta', price: 5 },
-    { id: 13, name: 'Condones', price: 0 },
-    { id: 14, name: 'Agua', price: 10 },
+    { id: 7, name: 'Perla Negra', price: 200 },
+    { id: 8, name: 'Mojito', price: 200 },
+    { id: 9, name: 'Poppers', price: 350 },
+    { id: 10, name: 'Cigarros', price: 10 },
+    { id: 11, name: 'Papas', price: 15 },
+    { id: 12, name: 'Maruchan', price: 25 },
+    { id: 13, name: 'Paleta', price: 5 },
+    { id: 14, name: 'Condones', price: 0 },
+    { id: 15, name: 'Agua', price: 10 },
 
   ]
 
