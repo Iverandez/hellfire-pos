@@ -213,7 +213,7 @@ export default function App() {
 
   const total = getTotal(selectedTable.items)
 
- await supabase
+ const { error } = await supabase
     .from('sales')
     .insert([{
       table_number: selectedTable.number,
@@ -221,8 +221,6 @@ export default function App() {
       total,
       payment_method: method
     }])
-
-  console.log('ERROR SALES:', error)
 
   if(error){
     alert(error.message)
