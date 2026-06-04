@@ -207,14 +207,14 @@ export default function App() {
 
   async function payTable(method){
 
-     console.log(' https://ndbgblpsdtonlmvxqfqq.supabase.co', supabase.supabaseUrl)
+     console.log('SUPABASE URL:', supabase.supabaseUrl)
     console.log('METODO SELECCIONADO:', method)
 
   if(!selectedTable) return
 
   const total = getTotal(selectedTable.items)
 
- await supabase
+const result = await supabase
     .from('sales')
     .insert([{
       table_number: selectedTable.number,
@@ -222,6 +222,8 @@ export default function App() {
       total,
       payment_method: method
     }])
+
+    console.log(result)
 
   if(error){
     alert(error.message)
