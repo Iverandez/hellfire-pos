@@ -144,6 +144,8 @@ export default function App() {
 
   setDailyTotal(total)
 
+}
+
   async function addProduct(product){
 
     if(!selectedTable) return
@@ -225,6 +227,8 @@ export default function App() {
     return
   }
 
+    await fetchDailySales()
+
   await supabase
     .from('tables')
     .update({
@@ -236,26 +240,6 @@ export default function App() {
   setShowQR(true)
 
 }
-
-      await fetchDailySales()
-
-    await supabase
-
-      .from('tables')
-
-      .update({
-
-        paid:true,
-
-        payment_method:method
-
-      })
-
-      .eq('id',selectedTable.id)
-
-    setShowQR(true)
-
-  }
 
   async function resetTable(){
 
