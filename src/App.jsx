@@ -181,7 +181,7 @@ export default function App() {
         (_,i)=>i !== index
       )
 
-    const { error } = await supabase
+    await supabase
 
       .from('tables')
 
