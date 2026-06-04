@@ -24,6 +24,9 @@ export default function App() {
   const [showQR, setShowQR] = useState(false)
   const [session,setSession] = useState(null)
 
+  const [dailySales, setDailySales] = useState([])
+  const [dailyTotal, setDailyTotal] = useState(0)
+
   const selectedTable = tables.find(
     table => table.id === selectedTableId
   )
@@ -67,6 +70,7 @@ export default function App() {
     )
 
     fetchTables()
+    fetchDailySales()
 
     const channel = supabase
 
@@ -200,6 +204,8 @@ export default function App() {
 
       }])
 
+      await fetchDailySales()
+
     await supabase
 
       .from('tables')
@@ -286,6 +292,28 @@ PAGADO
           <h1 className="text-5xl font-black text-pink-500">
 
             HELLFIRE POS
+
+            <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mb-6">
+
+  <h2 className="text-2xl font-black text-green-400">
+
+    Ventas del Día 🇲🇽
+
+  </h2>
+
+  <p className="text-4xl font-black mt-2">
+
+    ${dailyTotal}
+
+  </p>
+
+  <p className="text-zinc-400 mt-2">
+
+    Tickets: {dailySales.length}
+
+  </p>
+
+</div>
 
           </h1>
 
