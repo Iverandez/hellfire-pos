@@ -118,27 +118,31 @@ export default function App() {
 
     }
 
-     setDailySales(data || [])
-
-    const total = (data || []).reduce(
-      (sum,sale)=>sum + Number(sale.total || 0),
-      0
-    )
-
-    setDailyTotal(total)
-  }
-
-  async function addProduct(product){
-    ...
-  }
-
-  async function removeProduct(index){
-    ...
-  }
-
     setTables(data)
 
   }
+
+  async function fetchDailySales(){
+
+  const { data, error } = await supabase
+    .from('sales')
+    .select('*')
+
+  if(error){
+    console.log(error)
+    return
+  }
+
+  setDailySales(data || [])
+
+  const total = (data || []).reduce(
+    (sum,sale)=>sum + Number(sale.total || 0),
+    0
+  )
+
+  setDailyTotal(total)
+
+}
 
   async function addProduct(product){
 
