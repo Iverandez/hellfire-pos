@@ -310,7 +310,7 @@ PAGADO
 
                  <h1 className="text-5xl font-black text-pink-500">
 
-                HELLFIRE-POS
+                HELLFIRE
   
               </h1>
 
