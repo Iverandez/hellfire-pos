@@ -207,7 +207,7 @@ export default function App() {
 
   async function payTable(method){
 
-     console.log('SUPABASE URL:', supabase.supabaseUrl)
+     console.log(' https://ndbgblpsdtonlmvxqfqq.supabase.co', supabase.supabaseUrl)
     console.log('METODO SELECCIONADO:', method)
 
   if(!selectedTable) return
