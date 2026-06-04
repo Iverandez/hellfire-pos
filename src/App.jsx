@@ -133,6 +133,8 @@ export default function App() {
     return
   }
 
+   console.log('VENTAS', data)
+
   setDailySales(data || [])
 
   const total = (data || []).reduce(
@@ -141,8 +143,6 @@ export default function App() {
   )
 
   setDailyTotal(total)
-
-}
 
   async function addProduct(product){
 
@@ -205,26 +205,37 @@ export default function App() {
 
   async function payTable(method){
 
-    if(!selectedTable) return
+  if(!selectedTable) return
 
-    const total =
-      getTotal(selectedTable.items)
+  const total = getTotal(selectedTable.items)
 
-    await supabase
+  const { error } = await supabase
+    .from('sales')
+    .insert([{
+      table_number: selectedTable.number,
+      items: selectedTable.items,
+      total,
+      payment_method: method
+    }])
 
-      .from('sales')
+  console.log('ERROR SALES:', error)
 
-      .insert([{
+  if(error){
+    alert(error.message)
+    return
+  }
 
-        table_number: selectedTable.number,
+  await supabase
+    .from('tables')
+    .update({
+      paid: true,
+      payment_method: method
+    })
+    .eq('id', selectedTable.id)
 
-        items: selectedTable.items,
+  setShowQR(true)
 
-        total: total,
-
-        payment_method: method
-
-      }])
+}
 
       await fetchDailySales()
 
@@ -701,6 +712,5 @@ PAGADO
 
     </div>
 
-  )
-
+  ) 
 }
