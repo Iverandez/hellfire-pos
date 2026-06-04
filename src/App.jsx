@@ -207,6 +207,8 @@ export default function App() {
 
   async function payTable(method){
 
+    console.log('METODO SELECCIONADO:', method)
+
   if(!selectedTable) return
 
   const total = getTotal(selectedTable.items)
