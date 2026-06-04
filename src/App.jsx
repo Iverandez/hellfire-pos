@@ -118,6 +118,24 @@ export default function App() {
 
     }
 
+     setDailySales(data || [])
+
+    const total = (data || []).reduce(
+      (sum,sale)=>sum + Number(sale.total || 0),
+      0
+    )
+
+    setDailyTotal(total)
+  }
+
+  async function addProduct(product){
+    ...
+  }
+
+  async function removeProduct(index){
+    ...
+  }
+
     setTables(data)
 
   }
@@ -289,35 +307,31 @@ PAGADO
 
         <div>
 
-          <h1 className="text-5xl font-black text-pink-500">
+          <div>
 
-            HELLFIRE POS
+  <h1 className="text-5xl font-black text-pink-500">
 
-            <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mb-6">
+    HELLFIRE
+  
+  </h1>
 
-  <h2 className="text-2xl font-black text-green-400">
+  <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mt-4">
 
-    Ventas del Día 🇲🇽
+    <h2 className="text-2xl font-black text-green-400">
+      Ventas del Día 🇲🇽
+    </h2>
 
-  </h2>
+    <p className="text-4xl font-black mt-2">
+      ${dailyTotal}
+    </p>
 
-  <p className="text-4xl font-black mt-2">
+    <p className="text-zinc-400 mt-2">
+      Tickets: {dailySales.length}
+    </p>
 
-    ${dailyTotal}
-
-  </p>
-
-  <p className="text-zinc-400 mt-2">
-
-    Tickets: {dailySales.length}
-
-  </p>
+  </div>
 
 </div>
-
-          </h1>
-
-        </div>
 
         <div className="flex items-center gap-4">
 
