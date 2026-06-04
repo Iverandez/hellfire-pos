@@ -309,19 +309,17 @@ PAGADO
 
       <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
 
-        <div>
-
           <div>
 
-  <h1 className="text-5xl font-black text-pink-500">
+                 <h1 className="text-5xl font-black text-pink-500">
 
-    HELLFIRE
+                HELLFIRE-POS
   
-  </h1>
+              </h1>
 
-  <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mt-4">
+             <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mt-4">
 
-    <h2 className="text-2xl font-black text-green-400">
+           <h2 className="text-2xl font-black text-green-400">
       Ventas del Día 🇲🇽
     </h2>
 
