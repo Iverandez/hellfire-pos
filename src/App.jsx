@@ -181,7 +181,7 @@ export default function App() {
         (_,i)=>i !== index
       )
 
-    await supabase
+    const { error } = await supabase
 
       .from('tables')
 
@@ -213,7 +213,7 @@ export default function App() {
 
   const total = getTotal(selectedTable.items)
 
- const { error } = await supabase
+ await supabase
     .from('sales')
     .insert([{
       table_number: selectedTable.number,
