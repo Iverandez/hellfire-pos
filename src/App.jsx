@@ -232,7 +232,7 @@ const result = await supabase
 
     await fetchDailySales()
 
-  await supabase
+   const { error } = await supabase
     .from('tables')
     .update({
       paid: true,
