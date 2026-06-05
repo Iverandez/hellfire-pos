@@ -24,9 +24,6 @@ export default function App() {
   const [showQR, setShowQR] = useState(false)
   const [session,setSession] = useState(null)
 
-  const [dailySales, setDailySales] = useState([])
-  const [dailyTotal, setDailyTotal] = useState(0)
-
   const selectedTable = tables.find(
     table => table.id === selectedTableId
   )
@@ -70,7 +67,6 @@ export default function App() {
     )
 
     fetchTables()
-    fetchDailySales()
 
     const channel = supabase
 
@@ -122,29 +118,6 @@ export default function App() {
 
   }
 
-  async function fetchDailySales(){
-
-  const { data, error } = await supabase
-    .from('sales')
-    .select('*')
-
-  if(error){
-    console.log(error)
-    return
-  }
-
-   console.log('VENTAS', data)
-
-  setDailySales(data || [])
-
-  const total = (data || []).reduce(
-    (sum,sale)=>sum + Number(sale.total || 0),
-    0
-  )
-
-  setDailyTotal(total)
-
-}
 
   async function addProduct(product){
 
@@ -201,38 +174,11 @@ export default function App() {
 
     }
 
-    fetchTables()
-
-  }
-
   async function payTable(method){
-
-     console.log('SUPABASE URL:', supabase.supabaseUrl)
-    console.log('METODO SELECCIONADO:', method)
 
   if(!selectedTable) return
 
-  const total = getTotal(selectedTable.items)
-
-const result = await supabase
-    .from('sales')
-    .insert([{
-      table_number: selectedTable.number,
-      items: selectedTable.items,
-      total,
-      payment_method: method
-    }])
-
-    console.log(result)
-
-  if(error){
-    alert(error.message)
-    return
-  }
-
-    await fetchDailySales()
-
-   const { error } = await supabase
+  const { error } = await supabase
     .from('tables')
     .update({
       paid: true,
@@ -240,10 +186,16 @@ const result = await supabase
     })
     .eq('id', selectedTable.id)
 
+  if(error){
+    alert(error.message)
+    return
+  }
+
+  await fetchTables()
+
   setShowQR(true)
-
 }
-
+   
   async function resetTable(){
 
     if(!selectedTable) return
@@ -314,24 +266,6 @@ PAGADO
                 HELLFIRE
   
               </h1>
-
-             <div className="bg-zinc-900 border border-green-500 rounded-2xl p-4 mt-4">
-
-           <h2 className="text-2xl font-black text-green-400">
-      Ventas del Día 🇲🇽
-    </h2>
-
-    <p className="text-4xl font-black mt-2">
-      ${dailyTotal}
-    </p>
-
-    <p className="text-zinc-400 mt-2">
-      Tickets: {dailySales.length}
-    </p>
-
-  </div>
-
-</div>
 
         <div className="flex items-center gap-4">
 
