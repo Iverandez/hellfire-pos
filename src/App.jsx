@@ -173,6 +173,8 @@ export default function App() {
       return
 
     }
+  
+  }
 
   async function payTable(method){
 
@@ -258,8 +260,6 @@ PAGADO
     <div className="min-h-screen bg-black text-white">
 
       <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
-
-          <div>
 
                  <h1 className="text-5xl font-black text-pink-500">
 
