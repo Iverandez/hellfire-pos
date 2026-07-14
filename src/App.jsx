@@ -6,16 +6,16 @@ import Login from './Login'
 
 export default function App() {
 
-  function getTotal(items){
+function getTotal(items){
 
-    if(!items) return 0
+  if(!items) return 0
 
-    return items.reduce(
-      (sum,item)=>sum + item.price,
-      0
-    )
+  return items.reduce(
+    (sum,item)=>sum + Number(item.price || 0),
+    0
+  )
 
-  }
+}
 
   const qrRef = useRef()
 
@@ -49,104 +49,150 @@ export default function App() {
 
   ]
 
-  useEffect(()=>{
+useEffect(()=>{
 
-    supabase.auth.getSession()
+  supabase.auth.getSession()
 
-      .then(({ data:{ session } })=>{
+    .then(({ data:{ session } })=>{
 
-        setSession(session)
+      setSession(session)
 
-      })
+    })
 
-    supabase.auth.onAuthStateChange(
-      (_event,session)=>{
 
-        setSession(session)
+  const { data: authListener } = supabase.auth.onAuthStateChange(
+    (_event, session)=>{
+
+      setSession(session)
+
+    }
+  )
+
+
+  fetchTables()
+  fetchTodaySales()
+
+
+  const channel = supabase
+
+    .channel('tables-realtime')
+
+    .on(
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:'tables'
+      },
+      ()=>{
+
+        fetchTables()
 
       }
     )
 
-    fetchTables()
-    fetchTodaySales()
+    .on(
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:'sales'
+      },
+      ()=>{
 
-    const channel = supabase
+        fetchTodaySales()
 
-      .channel('tables-realtime')
+      }
+    )
 
-      .on(
-        'postgres_changes',
-        {
-          event:'*',
-          schema:'public',
-          table:'tables'
-        },
-        ()=>{
+    .subscribe()
 
-          fetchTables()
 
-        }
-      )
+  return ()=>{
 
-      .subscribe()
+    supabase.removeChannel(channel)
 
-    return ()=>{
+    authListener.subscription.unsubscribe()
 
-      supabase.removeChannel(channel)
+  }
 
-    }
 
-  },[])
+},[])
 
-  async function fetchTables(){
 
-    async function fetchTodaySales(){
 
-  const inicio = new Date()
-  inicio.setHours(0,0,0,0)
-
-  const fin = new Date()
-  fin.setHours(23,59,59,999)
+async function fetchTables(){
 
   const { data, error } = await supabase
-    .from('sales')
-    .select('total')
-    .gte('created_at', inicio.toISOString())
-    .lte('created_at', fin.toISOString())
+
+    .from('tables')
+
+    .select('*')
+
+    .order('number', { ascending:true })
+
 
   if(error){
-    console.log(error)
+
+    alert(error.message)
+
     return
+
   }
 
-  const total = (data || []).reduce(
-    (sum,item)=>sum + Number(item.total),
-    0
-  )
 
-  setTodaySales(total)
+  setTables(data || [])
+
 }
 
-    const { data, error } = await supabase
 
-      .from('tables')
 
-      .select('*')
+async function fetchTodaySales(){
 
-      .order('number', { ascending:true })
+  const inicio = new Date()
 
-    if(error){
+  inicio.setHours(0,0,0,0)
 
-      alert(error.message)
 
-      return
+  const fin = new Date()
 
-    }
+  fin.setHours(23,59,59,999)
 
-    setTables(data)
+
+
+  const { data, error } = await supabase
+
+    .from('sales')
+
+    .select('total')
+
+    .gte('created_at', inicio.toISOString())
+
+    .lte('created_at', fin.toISOString())
+
+
+  if(error){
+
+    console.log(error)
+
+    return
 
   }
 
+
+
+  const total = (data || []).reduce(
+
+    (sum,item)=> sum + Number(item.total || 0),
+
+    0
+
+  )
+
+
+  setTodaySales(total)
+
+}
 
   async function addProduct(product){
 
