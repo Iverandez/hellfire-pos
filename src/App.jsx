@@ -20,6 +20,7 @@ export default function App() {
   const qrRef = useRef()
 
   const [tables, setTables] = useState([])
+  const [todaySales, setTodaySales] = useState(0)
   const [selectedTableId, setSelectedTableId] = useState(null)
   const [showQR, setShowQR] = useState(false)
   const [session,setSession] = useState(null)
@@ -67,6 +68,29 @@ export default function App() {
     )
 
     fetchTables()
+    fetchTodaySales()
+
+    async function fetchTodaySales(){
+
+  const inicio = new Date()
+  inicio.setHours(0,0,0,0)
+
+  const fin = new Date()
+  fin.setHours(23,59,59,999)
+
+  const { data } = await supabase
+      .from('sales')
+      .select('total')
+      .gte('created_at', inicio.toISOString())
+      .lte('created_at', fin.toISOString())
+
+  const total = (data || []).reduce(
+      (sum,item)=>sum + Number(item.total),
+      0
+  )
+
+  setTodaySales(total)
+}
 
     const channel = supabase
 
@@ -180,6 +204,16 @@ export default function App() {
 
   if(!selectedTable) return
 
+  const total = getTotal(selectedTable.items)
+
+  await supabase
+  .from('sales')
+  .insert({
+      table_number: selectedTable.number,
+      total: total,
+      payment_method: method
+  })
+
   const { error } = await supabase
     .from('tables')
     .update({
@@ -194,6 +228,7 @@ export default function App() {
   }
 
   await fetchTables()
+  await fetchTodaySales()
 
   setShowQR(true)
 }
@@ -266,6 +301,16 @@ PAGADO
                 HELLFIRE
   
               </h1>
+
+              <div className="mt-2">
+    <p className="text-zinc-400">
+        Venta del día
+    </p>
+
+    <h2 className="text-3xl font-black text-green-400">
+        ${todaySales}
+    </h2>
+</div>
 
         <div className="flex items-center gap-4">
 
