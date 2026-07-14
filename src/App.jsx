@@ -70,32 +70,6 @@ export default function App() {
     fetchTables()
     fetchTodaySales()
 
- async function fetchTodaySales() {
-
-  const inicio = new Date()
-  inicio.setHours(0,0,0,0)
-
-  const fin = new Date()
-  fin.setHours(23,59,59,999)
-
-  const { data, error } = await supabase
-    .from('sales')
-    .select('total')
-    .gte('created_at', inicio.toISOString())
-    .lte('created_at', fin.toISOString())
-
-  if (error) {
-    console.log(error)
-    return
-  }
-
-  const total = (data || []).reduce(
-    (sum, item) => sum + Number(item.total),
-    0
-  )
-
-  setTodaySales(total)
-}
     const channel = supabase
 
       .channel('tables-realtime')
@@ -125,6 +99,33 @@ export default function App() {
   },[])
 
   async function fetchTables(){
+
+    async function fetchTodaySales(){
+
+  const inicio = new Date()
+  inicio.setHours(0,0,0,0)
+
+  const fin = new Date()
+  fin.setHours(23,59,59,999)
+
+  const { data, error } = await supabase
+    .from('sales')
+    .select('total')
+    .gte('created_at', inicio.toISOString())
+    .lte('created_at', fin.toISOString())
+
+  if(error){
+    console.log(error)
+    return
+  }
+
+  const total = (data || []).reduce(
+    (sum,item)=>sum + Number(item.total),
+    0
+  )
+
+  setTodaySales(total)
+}
 
     const { data, error } = await supabase
 
