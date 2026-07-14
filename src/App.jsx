@@ -44,9 +44,9 @@ function getTotal(items){
     { id: 11, name: 'Papas', price: 15 },
     { id: 12, name: 'Maruchan', price: 25 },
     { id: 13, name: 'Paleta', price: 5 },
-    { id: 14, name: 'Chicles', price: 4 },
+    { id: 14, name: 'Chicles', price: 5 },
     { id: 15, name: 'Condones', price: 10 },
-    { id: 16, name: 'Sexo Servidores', price: 1500 },
+    { id: 16, name: 'Sexo Servidor', price: 1500 },
 
   ]
 
