@@ -432,6 +432,19 @@ PAGADO
     <h2 className="text-3xl font-black text-green-400">
         ${todaySales}
     </h2>
+
+    <button
+
+  onClick={resetSales}
+
+  className="mt-3 bg-red-600 px-4 py-2 rounded-xl font-black"
+
+>
+
+  Reiniciar Ventas
+
+</button>
+
 </div>
 
         <div className="flex items-center gap-4">
