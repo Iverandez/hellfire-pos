@@ -78,18 +78,18 @@ useEffect(()=>{
     .channel('tables-realtime')
 
     .on(
-      'postgres_changes',
-      {
-        event:'*',
-        schema:'public',
-        table:'tables'
-      },
-      ()=>{
+ 'postgres_changes',
+ {
+   event:'*',
+   schema:'public',
+   table:'tables'
+ },
+ ()=>{
 
-        fetchTables()
+   fetchTables()
 
-      }
-    )
+ }
+)
 
     .on(
       'postgres_changes',
@@ -196,60 +196,94 @@ async function fetchTodaySales(){
 
   async function addProduct(product){
 
-    if(!selectedTable) return
+  if(!selectedTable) return
 
-    const updatedItems = [
 
-      ...(selectedTable.items || []),
+  const updatedItems = [
+    ...(selectedTable.items || []),
+    product
+  ]
 
-      product
 
-    ]
+  // Actualización inmediata en pantalla
+  setTables(prevTables =>
+    prevTables.map(table =>
+      table.id === selectedTable.id
+        ? {
+            ...table,
+            items: updatedItems
+          }
+        : table
+    )
+  )
 
-    await supabase
 
-      .from('tables')
+  // Guardar en Supabase después
+  const { error } = await supabase
 
-      .update({
+    .from('tables')
 
-        items:updatedItems
+    .update({
+      items: updatedItems
+    })
 
-      })
+    .eq('id', selectedTable.id)
 
-      .eq('id',selectedTable.id)
+
+  if(error){
+
+    alert(error.message)
+
+    // Si falla, recargar datos reales
+    fetchTables()
 
   }
+
+}
 
   async function removeProduct(index){
 
-    if(!selectedTable) return
+  if(!selectedTable) return
 
-    const updatedItems =
-      (selectedTable.items || []).filter(
-        (_,i)=>i !== index
-      )
 
-    const { error } = await supabase
+  const updatedItems =
+    (selectedTable.items || []).filter(
+      (_,i)=>i !== index
+    )
 
-      .from('tables')
 
-      .update({
+  setTables(prevTables =>
+    prevTables.map(table =>
+      table.id === selectedTable.id
+        ? {
+            ...table,
+            items: updatedItems
+          }
+        : table
+    )
+  )
 
-        items: updatedItems
 
-      })
+  const { error } = await supabase
 
-      .eq('id', selectedTable.id)
+    .from('tables')
 
-    if(error){
+    .update({
+      items: updatedItems
+    })
 
-      alert(error.message)
+    .eq('id', selectedTable.id)
 
-      return
 
-    }
-  
+  if(error){
+
+    alert(error.message)
+
+    fetchTables()
+
   }
+
+}
 
   async function payTable(method){
 
