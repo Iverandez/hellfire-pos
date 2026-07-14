@@ -149,15 +149,25 @@ async function fetchTables(){
 
 async function fetchTodaySales(){
 
-  const inicio = new Date()
+  const { data: cut } = await supabase
+    .from('daily_cuts')
+    .select('created_at')
+    .order('created_at', { ascending:false })
+    .limit(1)
+    .single()
 
-  inicio.setHours(0,0,0,0)
 
+  let inicio = new Date()
 
-  const fin = new Date()
+  if(cut){
 
-  fin.setHours(23,59,59,999)
+    inicio = new Date(cut.created_at)
 
+  }else{
+
+    inicio.setHours(0,0,0,0)
+
+  }
 
 
   const { data, error } = await supabase
@@ -166,24 +176,23 @@ async function fetchTodaySales(){
 
     .select('total')
 
-    .gte('created_at', inicio.toISOString())
-
-    .lte('created_at', fin.toISOString())
+    .gte(
+      'created_at',
+      inicio.toISOString()
+    )
 
 
   if(error){
 
     console.log(error)
-
     return
 
   }
 
 
-
   const total = (data || []).reduce(
 
-    (sum,item)=> sum + Number(item.total || 0),
+    (sum,item)=>sum + Number(item.total || 0),
 
     0
 
@@ -191,6 +200,34 @@ async function fetchTodaySales(){
 
 
   setTodaySales(total)
+
+}
+
+async function resetSales(){
+
+  const confirmacion = confirm(
+    "¿Reiniciar ventas del día?"
+  )
+
+  if(!confirmacion) return
+
+
+  const { error } = await supabase
+
+    .from('daily_cuts')
+
+    .insert({})
+
+
+  if(error){
+
+    alert(error.message)
+    return
+
+  }
+
+
+  setTodaySales(0)
 
 }
 
