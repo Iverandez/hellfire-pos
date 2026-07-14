@@ -44,7 +44,7 @@ function getTotal(items){
     { id: 11, name: 'Papas', price: 15 },
     { id: 12, name: 'Maruchan', price: 25 },
     { id: 13, name: 'Paleta', price: 5 },
-    { id: 14, name: 'Condones', price: 0 },
+    { id: 14, name: 'Condones', price: 10 },
     { id: 15, name: 'Agua', price: 10 },
 
   ]
