@@ -31,8 +31,8 @@ function getTotal(items){
 
   const products = [
 
-    { id: 1, name: 'Entrada', price: 150 },
-    { id: 2, name: 'Barra Libre', price: 400 },
+    { id: 1, name: 'Entrada', price: 200 },
+    { id: 2, name: 'Barra Libre', price: 500 },
     { id: 3, name: 'Cerveza Lata', price: 60 },
     { id: 4, name: 'Cigarros', price: 10 },
     { id: 5, name: 'Poppers', price: 450 },
