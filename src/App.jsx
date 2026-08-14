@@ -366,10 +366,15 @@ async function addProduct(product){
 
   try{
 
-    const updatedItems = [
-      ...(selectedTable.items || []),
-      product
-    ]
+    const productWithTime = {
+  ...product,
+  added_at: new Date().toISOString()
+}
+
+const updatedItems = [
+  ...(selectedTable.items || []),
+  productWithTime
+]
 
     console.log(
       'AGREGANDO PRODUCTO:',
@@ -948,13 +953,35 @@ PAGADO
                         </p>
 
                         <p className="font-bold">
+  {item.name}
+</p>
 
-                          {
-                            venta.payment_method
-                            || 'Sin especificar'
-                          }
+<p className="text-pink-400">
+  ${item.price}
+</p>
 
-                        </p>
+{
+  item.added_at && (
+
+    <p className="text-zinc-500 text-sm mt-1">
+
+      {
+        new Date(item.added_at)
+          .toLocaleString(
+            'es-MX',
+            {
+              day: '2-digit',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            }
+          )
+      }
+
+    </p>
+
+  )
+}
 
                       </div>
 
