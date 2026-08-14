@@ -120,6 +120,24 @@ useEffect(()=>{
 
   }
 
+  async function fetchTables(){
+
+  const { data, error } = await supabase
+    .from('tables')
+    .select('*')
+    .order('number', { ascending: true })
+
+  if(error){
+
+    console.error('ERROR CARGANDO CLIENTES:', error)
+    alert('Error cargando clientes: ' + error.message)
+
+    return
+  }
+
+  setTables(data || [])
+}
+
 
 },[])
 
