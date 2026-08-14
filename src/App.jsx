@@ -952,36 +952,17 @@ PAGADO
                           Método
                         </p>
 
-                        <p className="font-bold">
-  {item.name}
-</p>
+                        <div>
 
-<p className="text-pink-400">
-  ${item.price}
-</p>
+  <p className="text-zinc-400">
+    Método
+  </p>
 
-{
-  item.added_at && (
+  <p className="font-bold">
+    {venta.payment_method || 'Sin especificar'}
+  </p>
 
-    <p className="text-zinc-500 text-sm mt-1">
-
-      {
-        new Date(item.added_at)
-          .toLocaleString(
-            'es-MX',
-            {
-              day: '2-digit',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit'
-            }
-          )
-      }
-
-    </p>
-
-  )
-}
+</div>
 
                       </div>
 
@@ -1187,19 +1168,45 @@ PAGADO
 
                             <div>
 
-                              <p className="font-bold">
+  <p className="font-bold">
+    {item.name}
+  </p>
 
-                                {item.name}
+  <p className="text-pink-400">
+    ${item.price}
+  </p>
 
-                              </p>
+  {
+    item.added_at ? (
 
-                              <p className="text-pink-400">
+      <p className="text-zinc-400 text-sm mt-1">
 
-                                ${item.price}
+        {
+          new Date(item.added_at)
+            .toLocaleString(
+              'es-MX',
+              {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }
+            )
+        }
 
-                              </p>
+      </p>
 
-                            </div>
+    ) : (
+
+      <p className="text-zinc-600 text-xs mt-1">
+        Sin horario registrado
+      </p>
+
+    )
+  }
+
+</div>
 
                             <button
 
