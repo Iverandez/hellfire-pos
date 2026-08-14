@@ -149,61 +149,97 @@ async function fetchTables(){
 
 }
 
-
-
 async function fetchTodaySales(){
 
-  const { data: cut } = await supabase
-    .from('daily_cuts')
-    .select('created_at')
-    .order('created_at', { ascending:false })
-    .limit(1)
-    .single()
+  try{
 
+    // Buscar último corte de caja
+    const { data: cut, error: cutError } = await supabase
+      .from('daily_cuts')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
-  let inicio = new Date()
+    if(cutError){
+      console.error('ERROR BUSCANDO CORTE:', cutError)
+    }
 
-  if(cut){
+    console.log('ULTIMO CORTE:', cut)
 
-    inicio = new Date(cut.created_at)
+    let query = supabase
+      .from('sales')
+      .select('id, total, created_at, payment_method')
 
-  }else{
+    // Si existe un corte, contar desde ese momento
+    if(cut?.created_at){
 
-    inicio.setHours(0,0,0,0)
+      console.log('BUSCANDO VENTAS DESDE:', cut.created_at)
 
-  }
+      query = query.gte(
+        'created_at',
+        cut.created_at
+      )
 
+    }else{
 
-  const { data, error } = await supabase
+      // Si nunca se ha hecho un corte,
+      // contar desde el inicio del día
+      const inicio = new Date()
 
-    .from('sales')
+      inicio.setHours(0,0,0,0)
 
-    .select('total')
+      console.log(
+        'BUSCANDO VENTAS DESDE INICIO DEL DIA:',
+        inicio.toISOString()
+      )
 
-    .gte(
-      'created_at',
-      inicio.toISOString()
+      query = query.gte(
+        'created_at',
+        inicio.toISOString()
+      )
+
+    }
+
+    const { data, error } = await query
+
+    if(error){
+
+      console.error(
+        'ERROR CONSULTANDO VENTAS:',
+        error
+      )
+
+      return
+
+    }
+
+    console.log(
+      'VENTAS ENCONTRADAS:',
+      data
     )
 
+    const total = (data || []).reduce(
+      (sum, sale) =>
+        sum + Number(sale.total || 0),
+      0
+    )
 
-  if(error){
+    console.log(
+      'TOTAL CALCULADO:',
+      total
+    )
 
-    console.log(error)
-    return
+    setTodaySales(total)
+
+  }catch(error){
+
+    console.error(
+      'ERROR fetchTodaySales:',
+      error
+    )
 
   }
-
-
-  const total = (data || []).reduce(
-
-    (sum,item)=>sum + Number(item.total || 0),
-
-    0
-
-  )
-
-
-  setTodaySales(total)
 
 }
 
@@ -370,14 +406,7 @@ async function resetSales(){
       return
     }
 
-    const { error: saleError } = await supabase
-      .from('sales')
-      .insert({
-        table_number: selectedTable.number,
-        total: total,
-        payment_method: method
-      })
-
+  const { error: saleError } = await supabase
     if(saleError){
 
       await supabase
