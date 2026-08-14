@@ -867,59 +867,48 @@ PAGADO
                   </div>
 
                   {
+  selectedTable?.paid && (
 
-                    selectedTable?.paid && showQR && (
+    <div className="mt-10 flex flex-col items-center">
 
-                      <div className="mt-10 flex flex-col items-center">
+      {
+        showQR && (
+          <>
+            <div
+              ref={qrRef}
+              className="bg-black p-6 rounded-2xl border border-pink-500"
+            >
 
-                        <div
-                          ref={qrRef}
-                          className="bg-black p-6 rounded-2xl border border-pink-500"
-                        >
+              <QRCodeSVG
+                value={qrData}
+                size={250}
+                bgColor="#000"
+                fgColor="#fff"
+              />
 
-                          <QRCodeSVG
+            </div>
 
-                            value={qrData}
+            <button
+              onClick={downloadQR}
+              className="mt-5 bg-pink-500 px-6 py-3 rounded-2xl font-black"
+            >
+              Descargar QR
+            </button>
+          </>
+        )
+      }
 
-                            size={250}
+      <button
+        onClick={resetTable}
+        className="mt-3 bg-red-500 px-6 py-3 rounded-2xl font-black"
+      >
+        Liberar Cliente
+      </button>
 
-                            bgColor="#000"
+    </div>
 
-                            fgColor="#fff"
-
-                          />
-
-                        </div>
-
-                        <button
-
-                          onClick={downloadQR}
-
-                          className="mt-5 bg-pink-500 px-6 py-3 rounded-2xl font-black"
-
-                        >
-
-                          Descargar QR
-
-                        </button>
-
-                        <button
-
-                          onClick={resetTable}
-
-                          className="mt-3 bg-red-500 px-6 py-3 rounded-2xl font-black"
-
-                        >
-
-                          Liberar Cliente
-
-                        </button>
-
-                      </div>
-
-                    )
-
-                  }
+  )
+}
 
                 </div>
 
