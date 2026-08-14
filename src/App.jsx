@@ -149,99 +149,7 @@ async function fetchTables(){
 
 }
 
-async function fetchTodaySales(){
 
-  try{
-
-    // Buscar último corte de caja
-    const { data: cut, error: cutError } = await supabase
-      .from('daily_cuts')
-      .select('created_at')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if(cutError){
-      console.error('ERROR BUSCANDO CORTE:', cutError)
-    }
-
-    console.log('ULTIMO CORTE:', cut)
-
-    let query = supabase
-      .from('sales')
-      .select('id, total, created_at, payment_method')
-
-    // Si existe un corte, contar desde ese momento
-    if(cut?.created_at){
-
-      console.log('BUSCANDO VENTAS DESDE:', cut.created_at)
-
-      query = query.gte(
-        'created_at',
-        cut.created_at
-      )
-
-    }else{
-
-      // Si nunca se ha hecho un corte,
-      // contar desde el inicio del día
-      const inicio = new Date()
-
-      inicio.setHours(0,0,0,0)
-
-      console.log(
-        'BUSCANDO VENTAS DESDE INICIO DEL DIA:',
-        inicio.toISOString()
-      )
-
-      query = query.gte(
-        'created_at',
-        inicio.toISOString()
-      )
-
-    }
-
-    const { data, error } = await query
-
-    if(error){
-
-      console.error(
-        'ERROR CONSULTANDO VENTAS:',
-        error
-      )
-
-      return
-
-    }
-
-    console.log(
-      'VENTAS ENCONTRADAS:',
-      data
-    )
-
-    const total = (data || []).reduce(
-      (sum, sale) =>
-        sum + Number(sale.total || 0),
-      0
-    )
-
-    console.log(
-      'TOTAL CALCULADO:',
-      total
-    )
-
-    setTodaySales(total)
-
-  }catch(error){
-
-    console.error(
-      'ERROR fetchTodaySales:',
-      error
-    )
-
-  }
-
-}
 
 async function resetSales(){
 
@@ -253,71 +161,27 @@ async function resetSales(){
 
 
   const { error } = await supabase
-
     .from('daily_cuts')
-
     .insert({})
 
 
   if(error){
 
-    alert(error.message)
+    console.error(error)
+
+    alert(
+      'Error reiniciando ventas: ' +
+      error.message
+    )
+
     return
 
   }
 
 
-  setTodaySales(0)
+  await fetchTodaySales()
 
 }
-
-  async function addProduct(product){
-
-  if(!selectedTable) return
-
-
-  const updatedItems = [
-    ...(selectedTable.items || []),
-    product
-  ]
-
-
-  // Actualización inmediata en pantalla
-  setTables(prevTables =>
-    prevTables.map(table =>
-      table.id === selectedTable.id
-        ? {
-            ...table,
-            items: updatedItems
-          }
-        : table
-    )
-  )
-
-
-  // Guardar en Supabase después
-  const { error } = await supabase
-
-    .from('tables')
-
-    .update({
-      items: updatedItems
-    })
-
-    .eq('id', selectedTable.id)
-
-
-  if(error){
-
-    alert(error.message)
-
-    // Si falla, recargar datos reales
-    fetchTables()
-
-  }
-
-}
-
   async function removeProduct(index){
 
   if(!selectedTable) return
@@ -366,76 +230,92 @@ async function resetSales(){
 
   if(!selectedTable) return
 
+
+  // Impedir doble clic
   if(paymentLockRef.current) return
 
+
+  // Impedir volver a cobrar un cliente pagado
   if(selectedTable.paid){
+
     alert('Este cliente ya fue cobrado')
+
     return
+
   }
+
 
   paymentLockRef.current = true
   setIsPaying(true)
 
-  try {
 
-    const total = getTotal(selectedTable.items)
+  try{
 
-    if(total <= 0){
-      alert('El cliente no tiene consumo')
-      return
+    console.log(
+      'COBRANDO CLIENTE:',
+      selectedTable.id,
+      method
+    )
+
+
+    const { data, error } = await supabase
+      .rpc(
+        'pay_table',
+        {
+          p_table_id: selectedTable.id,
+          p_method: method
+        }
+      )
+
+
+    if(error){
+
+      console.error(
+        'ERROR COBRO:',
+        error
+      )
+
+      throw error
+
     }
 
-    const { data: claimedTable, error: tableError } = await supabase
-      .from('tables')
-      .update({
-        paid: true,
-        payment_method: method
-      })
-      .eq('id', selectedTable.id)
-      .or('paid.eq.false,paid.is.null')
-      .select('id')
-      .maybeSingle()
 
-    if(tableError){
-      throw tableError
-    }
+    console.log(
+      'COBRO GUARDADO:',
+      data
+    )
 
-    if(!claimedTable){
-      alert('Este cliente ya fue cobrado')
-      await fetchTables()
-      return
-    }
 
-  const { error: saleError } = await supabase
-    if(saleError){
-
-      await supabase
-        .from('tables')
-        .update({
-          paid: false,
-          payment_method: ''
-        })
-        .eq('id', selectedTable.id)
-
-      throw saleError
-    }
-
+    // Recargar clientes
     await fetchTables()
+
+
+    // Recargar venta del día
     await fetchTodaySales()
 
+
+    // Mostrar QR
     setShowQR(true)
 
-  } catch(error){
 
-    console.error('Error al cobrar:', error)
-    alert('Error al realizar el cobro: ' + error.message)
+  }catch(error){
 
-  } finally {
+    console.error(error)
+
+    alert(
+      error.message ||
+      'Error al realizar el cobro'
+    )
+
+
+  }finally{
 
     paymentLockRef.current = false
+
     setIsPaying(false)
 
   }
+
 }
    
   async function resetTable(){
