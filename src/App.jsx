@@ -356,7 +356,7 @@ async function resetSales(){
         payment_method: method
       })
       .eq('id', selectedTable.id)
-      .eq('paid', false)
+      .or('paid.eq.false,paid.is.null')
       .select('id')
       .maybeSingle()
 
