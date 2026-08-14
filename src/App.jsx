@@ -27,6 +27,11 @@ function getTotal(items){
   const [selectedTableId, setSelectedTableId] = useState(null)
   const [showQR, setShowQR] = useState(false)
   const [session,setSession] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyDate, setHistoryDate] = useState('')
+  const [historySales, setHistorySales] = useState([])
+  const [historyTotal, setHistoryTotal] = useState(0)
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const selectedTable = tables.find(
     table => table.id === selectedTableId
@@ -151,6 +156,108 @@ async function fetchTables(){
       'ERROR fetchTables:',
       error
     )
+
+  }
+
+}
+
+async function fetchSalesByDate(dateString){
+
+  if(!dateString){
+    alert('Selecciona una fecha')
+    return
+  }
+
+  setLoadingHistory(true)
+
+  try{
+
+    // Inicio del día seleccionado en la hora local
+    const start = new Date(
+      `${dateString}T00:00:00`
+    )
+
+    // Inicio del día siguiente
+    const end = new Date(
+      `${dateString}T00:00:00`
+    )
+
+    end.setDate(
+      end.getDate() + 1
+    )
+
+
+    const { data, error } = await supabase
+      .from('sales')
+      .select(`
+        id,
+        table_number,
+        total,
+        payment_method,
+        created_at
+      `)
+      .gte(
+        'created_at',
+        start.toISOString()
+      )
+      .lt(
+        'created_at',
+        end.toISOString()
+      )
+      .order(
+        'created_at',
+        { ascending: false }
+      )
+
+
+    if(error){
+
+      console.error(
+        'ERROR HISTORIAL:',
+        error
+      )
+
+      alert(
+        'Error cargando historial: ' +
+        error.message
+      )
+
+      return
+    }
+
+
+    const ventas = data || []
+
+    setHistorySales(ventas)
+
+
+    const total = ventas.reduce(
+
+      (sum, venta) =>
+        sum + Number(venta.total || 0),
+
+      0
+
+    )
+
+    setHistoryTotal(total)
+
+
+  }catch(error){
+
+    console.error(
+      'ERROR fetchSalesByDate:',
+      error
+    )
+
+    alert(
+      'Error consultando ventas: ' +
+      error.message
+    )
+
+  }finally{
+
+    setLoadingHistory(false)
 
   }
 
@@ -584,6 +691,32 @@ PAGADO
 
 </button>
 
+<button
+
+  onClick={() => {
+
+    setShowHistory(
+      prev => !prev
+    )
+
+  }}
+
+  className="
+    mt-3
+    ml-3
+    bg-pink-600
+    px-4
+    py-2
+    rounded-xl
+    font-black
+  "
+
+>
+
+  Ver Historial
+
+</button>
+
 </div>
 
         <div className="flex items-center gap-4">
@@ -625,6 +758,234 @@ PAGADO
         </div>
 
       </div>
+
+{
+  showHistory && (
+
+    <div className="
+      p-6
+      border-b
+      border-zinc-800
+      bg-zinc-950
+    ">
+
+      <div className="
+        flex
+        flex-col
+        md:flex-row
+        md:items-end
+        gap-4
+      ">
+
+        <div>
+
+          <label className="
+            block
+            text-zinc-400
+            mb-2
+            font-bold
+          ">
+            Seleccionar fecha
+          </label>
+
+          <input
+
+            type="date"
+
+            value={historyDate}
+
+            onChange={(e) =>
+              setHistoryDate(
+                e.target.value
+              )
+            }
+
+            className="
+              bg-zinc-900
+              border
+              border-zinc-700
+              rounded-xl
+              px-4
+              py-3
+              text-white
+            "
+
+          />
+
+        </div>
+
+
+        <button
+
+          onClick={() =>
+            fetchSalesByDate(
+              historyDate
+            )
+          }
+
+          disabled={loadingHistory}
+
+          className="
+            bg-pink-600
+            px-6
+            py-3
+            rounded-xl
+            font-black
+            disabled:opacity-50
+          "
+
+        >
+
+          {
+            loadingHistory
+              ? 'Buscando...'
+              : 'Consultar Ventas'
+          }
+
+        </button>
+
+
+        <div className="md:ml-auto">
+
+          <p className="text-zinc-400">
+            Total de la fecha
+          </p>
+
+          <h2 className="
+            text-4xl
+            font-black
+            text-green-400
+          ">
+
+            ${historyTotal}
+
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div className="mt-6">
+
+        {
+          historySales.length === 0
+          ? (
+
+            <p className="text-zinc-500">
+
+              No hay ventas para esta fecha.
+
+            </p>
+
+          )
+          : (
+
+            <div className="space-y-3">
+
+              {
+                historySales.map(
+                  venta => (
+
+                    <div
+
+                      key={venta.id}
+
+                      className="
+                        bg-zinc-900
+                        rounded-xl
+                        p-4
+                        flex
+                        flex-col
+                        md:flex-row
+                        md:items-center
+                        md:justify-between
+                        gap-3
+                      "
+
+                    >
+
+                      <div>
+
+                        <p className="
+                          text-xl
+                          font-black
+                        ">
+
+                          Cliente #
+                          {venta.table_number}
+
+                        </p>
+
+                        <p className="
+                          text-zinc-400
+                        ">
+
+                          {
+                            new Date(
+                              venta.created_at
+                            )
+                            .toLocaleTimeString(
+                              'es-MX',
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }
+                            )
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      <div>
+
+                        <p className="
+                          text-zinc-400
+                        ">
+                          Método
+                        </p>
+
+                        <p className="font-bold">
+
+                          {
+                            venta.payment_method
+                            || 'Sin especificar'
+                          }
+
+                        </p>
+
+                      </div>
+
+
+                      <div className="
+                        text-2xl
+                        font-black
+                        text-green-400
+                      ">
+
+                        ${venta.total}
+
+                      </div>
+
+                    </div>
+
+                  )
+                )
+              }
+
+            </div>
+
+          )
+        }
+
+      </div>
+
+    </div>
+
+  )
+}
 
       <div className="grid grid-cols-1 md:grid-cols-2">
 
