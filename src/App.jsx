@@ -123,33 +123,67 @@ useEffect(()=>{
 
 },[])
 
+async function fetchTodaySales(){
+
+  try{
+
+    const { data, error } = await supabase
+      .from('sales')
+      .select('id,total,created_at,payment_method')
 
 
-async function fetchTables(){
-
-  const { data, error } = await supabase
-
-    .from('tables')
-
-    .select('*')
-
-    .order('number', { ascending:true })
+    console.log(
+      'SALES LEÍDAS:',
+      data
+    )
 
 
-  if(error){
+    if(error){
 
-    alert(error.message)
+      console.error(
+        'ERROR LEYENDO SALES:',
+        error
+      )
 
-    return
+      alert(
+        'Error leyendo ventas: ' +
+        error.message
+      )
+
+      return
+
+    }
+
+
+    const total = (data || []).reduce(
+
+      (suma, venta) =>
+        suma + Number(venta.total || 0),
+
+      0
+
+    )
+
+
+    console.log(
+      'TOTAL DE VENTAS:',
+      total
+    )
+
+
+    setTodaySales(total)
+
+
+  }catch(error){
+
+    console.error(
+      'ERROR fetchTodaySales:',
+      error
+    )
 
   }
 
-
-  setTables(data || [])
-
 }
-
-
 
 async function resetSales(){
 
@@ -228,20 +262,20 @@ async function resetSales(){
 
  async function payTable(method){
 
-  if(!selectedTable) return
-
-
-  // Impedir doble clic
-  if(paymentLockRef.current) return
-
-
-  // Impedir volver a cobrar un cliente pagado
-  if(selectedTable.paid){
-
-    alert('Este cliente ya fue cobrado')
-
+  if(!selectedTable){
+    alert('Selecciona un cliente')
     return
+  }
 
+
+  if(paymentLockRef.current){
+    return
+  }
+
+
+  if(selectedTable.paid){
+    alert('Este cliente ya fue cobrado')
+    return
   }
 
 
@@ -252,45 +286,69 @@ async function resetSales(){
   try{
 
     console.log(
-      'COBRANDO CLIENTE:',
-      selectedTable.id,
-      method
+      'INICIANDO COBRO',
+      {
+        id: selectedTable.id,
+        cliente: selectedTable.number,
+        metodo: method
+      }
     )
 
 
-    const { data, error } = await supabase
-      .rpc(
-        'pay_table',
-        {
-          p_table_id: selectedTable.id,
-          p_method: method
-        }
-      )
+    const { data, error } = await supabase.rpc(
+      'pay_table',
+      {
+        p_table_id: selectedTable.id,
+        p_method: method
+      }
+    )
+
+
+    console.log(
+      'RESPUESTA PAY_TABLE:',
+      data
+    )
+
+    console.log(
+      'ERROR PAY_TABLE:',
+      error
+    )
 
 
     if(error){
 
-      console.error(
-        'ERROR COBRO:',
-        error
+      alert(
+        'Error al cobrar: ' +
+        error.message
       )
 
-      throw error
+      return
+
+    }
+
+
+    if(!data || data.length === 0){
+
+      alert(
+        'El cobro no regresó información'
+      )
+
+      return
 
     }
 
 
     console.log(
-      'COBRO GUARDADO:',
-      data
+      'VENTA CREADA:',
+      data[0]
     )
 
 
-    // Recargar clientes
+    // Actualizar clientes
     await fetchTables()
 
 
-    // Recargar venta del día
+    // Actualizar venta del día
     await fetchTodaySales()
 
 
@@ -300,18 +358,20 @@ async function resetSales(){
 
   }catch(error){
 
-    console.error(error)
+    console.error(
+      'ERROR GENERAL:',
+      error
+    )
 
     alert(
-      error.message ||
-      'Error al realizar el cobro'
+      'Error al realizar el cobro: ' +
+      error.message
     )
 
 
   }finally{
 
     paymentLockRef.current = false
-
     setIsPaying(false)
 
   }
