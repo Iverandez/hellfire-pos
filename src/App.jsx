@@ -31,8 +31,8 @@ function getTotal(items){
 
   const products = [
 
-    { id: 1, name: 'Entrada', price: 200 },
-    { id: 2, name: 'Barra Libre', price: 500 },
+    { id: 1, name: 'Entrada', price: 150 },
+    { id: 2, name: 'Barra Libre', price: 400 },
     { id: 3, name: 'Cerveza Lata', price: 60 },
     { id: 4, name: 'Cigarros', price: 10 },
     { id: 5, name: 'Poppers', price: 450 },
@@ -46,7 +46,7 @@ function getTotal(items){
     { id: 13, name: 'Paleta', price: 5 },
     { id: 14, name: 'Chicles', price: 5 },
     { id: 15, name: 'Condones', price: 10 },
-    { id: 16, name: 'Sexo Servidor', price: 1500 },
+    { id: 16, name: 'Refresco', price: 25 },
 
   ]
 
