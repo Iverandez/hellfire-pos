@@ -234,6 +234,89 @@ async function resetSales(){
   await fetchTodaySales()
 
 }
+
+async function addProduct(product){
+
+  if(!selectedTable){
+    alert('Selecciona un cliente')
+    return
+  }
+
+  try{
+
+    const updatedItems = [
+      ...(selectedTable.items || []),
+      product
+    ]
+
+    console.log(
+      'AGREGANDO PRODUCTO:',
+      product
+    )
+
+    console.log(
+      'CLIENTE:',
+      selectedTable.id
+    )
+
+    const { data, error } = await supabase
+      .from('tables')
+      .update({
+        items: updatedItems
+      })
+      .eq('id', selectedTable.id)
+      .select()
+      .single()
+
+
+    if(error){
+
+      console.error(
+        'ERROR AGREGANDO PRODUCTO:',
+        error
+      )
+
+      alert(
+        'Error agregando producto: ' +
+        error.message
+      )
+
+      return
+    }
+
+
+    console.log(
+      'CLIENTE ACTUALIZADO:',
+      data
+    )
+
+
+    // Actualizar la pantalla después de que
+    // Supabase confirmó el cambio
+    setTables(prevTables =>
+      prevTables.map(table =>
+        table.id === selectedTable.id
+          ? data
+          : table
+      )
+    )
+
+
+  }catch(error){
+
+    console.error(
+      'ERROR GENERAL addProduct:',
+      error
+    )
+
+    alert(
+      'Error agregando producto: ' +
+      error.message
+    )
+
+  }
+
+}
   async function removeProduct(index){
 
   if(!selectedTable) return
