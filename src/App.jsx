@@ -19,6 +19,9 @@ function getTotal(items){
 
   const qrRef = useRef()
 
+  const paymentLockRef = useRef(false)
+  const [isPaying, setIsPaying] = useState(false)
+
   const [tables, setTables] = useState([])
   const [todaySales, setTodaySales] = useState(0)
   const [selectedTableId, setSelectedTableId] = useState(null)
@@ -323,37 +326,87 @@ async function resetSales(){
 
 }
 
-  async function payTable(method){
+ async function payTable(method){
 
   if(!selectedTable) return
 
-  const total = getTotal(selectedTable.items)
+  if(paymentLockRef.current) return
 
-  await supabase
-  .from('sales')
-  .insert({
-      table_number: selectedTable.number,
-      total: total,
-      payment_method: method
-  })
-
-  const { error } = await supabase
-    .from('tables')
-    .update({
-      paid: true,
-      payment_method: method
-    })
-    .eq('id', selectedTable.id)
-
-  if(error){
-    alert(error.message)
+  if(selectedTable.paid){
+    alert('Este cliente ya fue cobrado')
     return
   }
 
-  await fetchTables()
-  await fetchTodaySales()
+  paymentLockRef.current = true
+  setIsPaying(true)
 
-  setShowQR(true)
+  try {
+
+    const total = getTotal(selectedTable.items)
+
+    if(total <= 0){
+      alert('El cliente no tiene consumo')
+      return
+    }
+
+    const { data: claimedTable, error: tableError } = await supabase
+      .from('tables')
+      .update({
+        paid: true,
+        payment_method: method
+      })
+      .eq('id', selectedTable.id)
+      .eq('paid', false)
+      .select('id')
+      .maybeSingle()
+
+    if(tableError){
+      throw tableError
+    }
+
+    if(!claimedTable){
+      alert('Este cliente ya fue cobrado')
+      await fetchTables()
+      return
+    }
+
+    const { error: saleError } = await supabase
+      .from('sales')
+      .insert({
+        table_number: selectedTable.number,
+        total: total,
+        payment_method: method
+      })
+
+    if(saleError){
+
+      await supabase
+        .from('tables')
+        .update({
+          paid: false,
+          payment_method: ''
+        })
+        .eq('id', selectedTable.id)
+
+      throw saleError
+    }
+
+    await fetchTables()
+    await fetchTodaySales()
+
+    setShowQR(true)
+
+  } catch(error){
+
+    console.error('Error al cobrar:', error)
+    alert('Error al realizar el cobro: ' + error.message)
+
+  } finally {
+
+    paymentLockRef.current = false
+    setIsPaying(false)
+
+  }
 }
    
   async function resetTable(){
@@ -702,46 +755,29 @@ PAGADO
                   <div className="grid grid-cols-3 gap-3 mt-6">
 
                     <button
+                   onClick={() => payTable('Efectivo')}
+                   disabled={isPaying || selectedTable?.paid}
+                   className="bg-green-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                  {isPaying ? 'Cobrando...' : 'Efectivo'}
+                 </button>
 
-                      onClick={()=>
-                        payTable('Efectivo')
-                      }
+                  <button
+                  onClick={() => payTable('Tarjeta')}
+                       disabled={isPaying || selectedTable?.paid}
+                          className="bg-blue-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                                {isPaying ? 'Cobrando...' : 'Tarjeta'}
 
-                      className="bg-green-500 py-4 rounded-2xl font-black"
+                              </button>
 
-                    >
-
-                      Efectivo
-
-                    </button>
-
-                    <button
-
-                      onClick={()=>
-                        payTable('Tarjeta')
-                      }
-
-                      className="bg-blue-500 py-4 rounded-2xl font-black"
-
-                    >
-
-                      Tarjeta
-
-                    </button>
-
-                    <button
-
-                      onClick={()=>
-                        payTable('Transferencia')
-                      }
-
-                      className="bg-purple-500 py-4 rounded-2xl font-black"
-
-                    >
-
-                      Transferencia
-
-                    </button>
+                             <button
+                            onClick={() => payTable('Transferencia')}
+                           disabled={isPaying || selectedTable?.paid}
+                             className="bg-purple-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                            {isPaying ? 'Cobrando...' : 'Transferencia'}
+                             </button>
 
                   </div>
 
