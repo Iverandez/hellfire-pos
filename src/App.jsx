@@ -56,21 +56,17 @@ function getTotal(items){
 useEffect(()=>{
 
   supabase.auth.getSession()
-
     .then(({ data:{ session } })=>{
-
       setSession(session)
-
     })
 
 
-  const { data: authListener } = supabase.auth.onAuthStateChange(
-    (_event, session)=>{
-
-      setSession(session)
-
-    }
-  )
+  const { data: authListener } =
+    supabase.auth.onAuthStateChange(
+      (_event, session)=>{
+        setSession(session)
+      }
+    )
 
 
   fetchTables()
@@ -82,18 +78,16 @@ useEffect(()=>{
     .channel('tables-realtime')
 
     .on(
- 'postgres_changes',
- {
-   event:'*',
-   schema:'public',
-   table:'tables'
- },
- ()=>{
-
-   fetchTables()
-
- }
-)
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:'tables'
+      },
+      ()=>{
+        fetchTables()
+      }
+    )
 
     .on(
       'postgres_changes',
@@ -103,9 +97,7 @@ useEffect(()=>{
         table:'sales'
       },
       ()=>{
-
         fetchTodaySales()
-
       }
     )
 
@@ -120,26 +112,49 @@ useEffect(()=>{
 
   }
 
-  async function fetchTables(){
+},[])
 
-  const { data, error } = await supabase
-    .from('tables')
-    .select('*')
-    .order('number', { ascending: true })
 
-  if(error){
 
-    console.error('ERROR CARGANDO CLIENTES:', error)
-    alert('Error cargando clientes: ' + error.message)
+async function fetchTables(){
 
-    return
+  try{
+
+    const { data, error } = await supabase
+      .from('tables')
+      .select('*')
+      .order('number', { ascending: true })
+
+
+    if(error){
+
+      console.error(
+        'ERROR CARGANDO CLIENTES:',
+        error
+      )
+
+      alert(
+        'Error cargando clientes: ' +
+        error.message
+      )
+
+      return
+    }
+
+
+    setTables(data || [])
+
+
+  }catch(error){
+
+    console.error(
+      'ERROR fetchTables:',
+      error
+    )
+
   }
 
-  setTables(data || [])
 }
-
-
-},[])
 
 async function fetchTodaySales(){
 
