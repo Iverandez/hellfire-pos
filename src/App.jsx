@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
 import Login from './Login'
-import hellfireLogo from './assets/Logo Hellfire.jpeg'
+import hellfireLogo from './assets/logo-hellfire.jpeg'
 
 export default function App() {
 
