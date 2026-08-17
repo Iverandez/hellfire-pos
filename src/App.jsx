@@ -267,47 +267,67 @@ async function fetchTodaySales(){
 
   try{
 
-    const { data, error } = await supabase
+    // Buscar el último cierre
+    const { data: lastCut, error: cutError } = await supabase
+      .from('daily_cuts')
+      .select('created_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if(cutError){
+      console.error('ERROR BUSCANDO CIERRE:', cutError)
+    }
+
+
+    let query = supabase
       .from('sales')
       .select('id,total,created_at,payment_method')
 
 
-    console.log(
-      'SALES LEÍDAS:',
-      data
-    )
+    if(lastCut?.created_at){
+
+      // Contar solamente ventas realizadas
+      // después del último cierre
+      query = query.gte(
+        'created_at',
+        lastCut.created_at
+      )
+
+    }else{
+
+      // Si nunca se ha realizado un cierre,
+      // comenzar desde las 00:00 del día actual
+      const inicioDia = new Date()
+
+      inicioDia.setHours(0,0,0,0)
+
+      query = query.gte(
+        'created_at',
+        inicioDia.toISOString()
+      )
+
+    }
+
+
+    const { data, error } = await query
 
 
     if(error){
 
       console.error(
-        'ERROR LEYENDO SALES:',
+        'ERROR LEYENDO VENTAS:',
         error
       )
 
-      alert(
-        'Error leyendo ventas: ' +
-        error.message
-      )
-
       return
-
     }
 
 
     const total = (data || []).reduce(
-
       (suma, venta) =>
         suma + Number(venta.total || 0),
-
       0
-
-    )
-
-
-    console.log(
-      'TOTAL DE VENTAS:',
-      total
     )
 
 
@@ -325,35 +345,62 @@ async function fetchTodaySales(){
 
 }
 
-async function resetSales(){
+async function closeDay(){
 
   const confirmacion = confirm(
-    "¿Reiniciar ventas del día?"
+    '¿Cerrar el día de ventas?\n\nEl contador regresará a $0 y las ventas quedarán guardadas en el historial.'
   )
 
   if(!confirmacion) return
 
 
-  const { error } = await supabase
-    .from('daily_cuts')
-    .insert({})
+  try{
+
+    const { error } = await supabase
+      .from('daily_cuts')
+      .insert({
+        created_at: new Date().toISOString()
+      })
 
 
-  if(error){
+    if(error){
 
-    console.error(error)
+      console.error(
+        'ERROR CERRANDO DÍA:',
+        error
+      )
+
+      alert(
+        'Error al cerrar el día: ' +
+        error.message
+      )
+
+      return
+    }
+
+
+    // Nuevo turno empieza inmediatamente en cero
+    setTodaySales(0)
+
 
     alert(
-      'Error reiniciando ventas: ' +
+      'Cierre realizado correctamente.\n\nEl nuevo día de ventas comienza en $0.'
+    )
+
+
+  }catch(error){
+
+    console.error(
+      'ERROR closeDay:',
+      error
+    )
+
+    alert(
+      'Error al cerrar el día: ' +
       error.message
     )
 
-    return
-
   }
-
-
-  await fetchTodaySales()
 
 }
 
@@ -685,15 +732,10 @@ PAGADO
     </h2>
 
     <button
-
-  onClick={resetSales}
-
+  onClick={closeDay}
   className="mt-3 bg-red-600 px-4 py-2 rounded-xl font-black"
-
 >
-
-  Reiniciar Ventas
-
+  Cerrar Día
 </button>
 
 <button
