@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { QRCodeSVG } from 'qrcode.react'
 import { toPng } from 'html-to-image'
 import Login from './Login'
+import hellfireLogo from './assets/hellfire-logo.png'
 
 export default function App() {
 
@@ -714,54 +715,40 @@ PAGADO
 
     <div className="min-h-screen bg-black text-white">
 
-      <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+      <div className="p-6 border-b border-fuchsia-500/30 bg-black/95 flex justify-between items-center shadow-[0_0_30px_rgba(255,0,150,0.15)]">
 
-                 <h1 className="text-5xl font-black text-pink-500">
+                 <div className="flex items-center gap-4">
 
-                HELLFIRE
-  
-              </h1>
+  <img
+    src={hellfireLogo}
+    alt="HELLFIRE"
+    className="h-24 w-auto object-contain drop-shadow-[0_0_25px_rgba(255,0,180,0.8)]"
+  />
+
+</div>
 
               <div className="mt-2">
-    <p className="text-zinc-400">
-        Venta del día
-    </p>
 
-    <h2 className="text-3xl font-black text-green-400">
-        ${todaySales}
-    </h2>
+    <p className="text-zinc-400 font-semibold tracking-wide">
+  Venta del día
+</p>
 
-    <button
+<h2 className="text-4xl font-black bg-gradient-to-r from-red-500 via-yellow-400 via-green-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">
+  ${todaySales}
+</h2>
+
+  <button
   onClick={closeDay}
-  className="mt-3 bg-red-600 px-4 py-2 rounded-xl font-black"
+  className="mt-3 bg-gradient-to-r from-red-600 to-pink-600 px-5 py-2 rounded-xl font-black shadow-[0_0_20px_rgba(255,0,100,0.35)] hover:scale-105 transition"
 >
   Cerrar Día
 </button>
 
 <button
-
-  onClick={() => {
-
-    setShowHistory(
-      prev => !prev
-    )
-
-  }}
-
-  className="
-    mt-3
-    ml-3
-    bg-pink-600
-    px-4
-    py-2
-    rounded-xl
-    font-black
-  "
-
+  onClick={() => setShowHistory(prev => !prev)}
+  className="mt-3 ml-3 bg-gradient-to-r from-fuchsia-600 via-pink-500 to-purple-600 px-5 py-2 rounded-xl font-black shadow-[0_0_20px_rgba(200,0,255,0.35)] hover:scale-105 transition"
 >
-
   Ver Historial
-
 </button>
 
 </div>
@@ -1063,17 +1050,16 @@ PAGADO
                     setSelectedTableId(table.id)
                   }
 
-                  className={`p-5 rounded-2xl
+                  className={`p-5 rounded-2xl border transition-all duration-200 shadow-md
 
-                  ${
-                    selectedTable?.id===table.id
-                    ? 'bg-pink-600'
-                    : table.paid
-                    ? 'bg-green-600'
-                    : 'bg-zinc-900'
-                  }
-
-                  `}
+${
+  selectedTable?.id === table.id
+    ? 'bg-gradient-to-r from-fuchsia-700 to-pink-600 border-fuchsia-400 shadow-[0_0_20px_rgba(255,0,180,0.35)]'
+    : table.paid
+    ? 'bg-gradient-to-r from-emerald-700 to-lime-600 border-emerald-300 shadow-[0_0_20px_rgba(0,255,150,0.25)]'
+    : 'bg-zinc-900 border-fuchsia-500/20 hover:border-fuchsia-400/50 hover:bg-zinc-800'
+}
+`}
 
                 >
 
@@ -1161,7 +1147,7 @@ PAGADO
                           addProduct(product)
                         }
 
-                        className="bg-zinc-900 p-5 rounded-2xl hover:bg-pink-600"
+                        className="bg-zinc-900 border border-fuchsia-500/20 p-5 rounded-2xl hover:bg-gradient-to-r hover:from-fuchsia-700 hover:via-pink-600 hover:to-purple-700 hover:border-fuchsia-300 transition-all duration-200 shadow-[0_0_10px_rgba(255,0,160,0.08)]"
 
                       >
 
@@ -1185,7 +1171,7 @@ PAGADO
 
                 </div>
 
-                <div className="mt-8 bg-zinc-900 p-5 rounded-2xl">
+                <div className="mt-8 bg-zinc-950 border border-fuchsia-500/20 p-5 rounded-2xl shadow-[0_0_25px_rgba(255,0,150,0.08)]">
 
                   <h2 className="text-3xl font-black mb-5">
 
