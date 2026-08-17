@@ -713,639 +713,1088 @@ PAGADO
 
   return (
 
-    <div className="min-h-screen bg-black text-white">
+  <div className="min-h-screen bg-black text-white">
 
-      <div className="p-6 border-b border-fuchsia-500/30 bg-black/95 flex justify-between items-center shadow-[0_0_30px_rgba(255,0,150,0.15)]">
+    {/* ========================================= */}
+    {/* HEADER */}
+    {/* ========================================= */}
 
-                 <div className="flex items-center gap-4">
+    <div
+      className="
+        p-5
+        border-b
+        border-fuchsia-500/30
+        bg-black
+        flex
+        flex-col
+        lg:flex-row
+        lg:justify-between
+        lg:items-center
+        gap-5
+        shadow-[0_0_35px_rgba(255,0,150,0.12)]
+      "
+    >
 
-  <img
-    src={hellfireLogo}
-    alt="HELLFIRE"
-    className="h-24 w-auto object-contain drop-shadow-[0_0_25px_rgba(255,0,180,0.8)]"
-  />
+      {/* LOGO */}
 
-</div>
+      <div className="flex items-center">
 
-              <div className="mt-2">
+        <img
+          src={hellfireLogo}
+          alt="HELLFIRE"
+          className="
+            h-24
+            md:h-28
+            w-auto
+            object-contain
+            drop-shadow-[0_0_18px_rgba(255,0,180,0.55)]
+          "
+        />
 
-    <p className="text-zinc-400 font-semibold tracking-wide">
-  Venta del día
-</p>
+      </div>
 
-<h2 className="text-4xl font-black bg-gradient-to-r from-red-500 via-yellow-400 via-green-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">
-  ${todaySales}
-</h2>
 
-  <button
-  onClick={closeDay}
-  className="mt-3 bg-gradient-to-r from-red-600 to-pink-600 px-5 py-2 rounded-xl font-black shadow-[0_0_20px_rgba(255,0,100,0.35)] hover:scale-105 transition"
->
-  Cerrar Día
-</button>
+      {/* VENTA DEL DÍA */}
 
-<button
-  onClick={() => setShowHistory(prev => !prev)}
-  className="mt-3 ml-3 bg-gradient-to-r from-fuchsia-600 via-pink-500 to-purple-600 px-5 py-2 rounded-xl font-black shadow-[0_0_20px_rgba(200,0,255,0.35)] hover:scale-105 transition"
->
-  Ver Historial
-</button>
+      <div className="text-center">
 
-</div>
+        <p className="
+          text-zinc-400
+          uppercase
+          tracking-[0.2em]
+          text-sm
+          font-bold
+        ">
+          Venta del día
+        </p>
 
-        <div className="flex items-center gap-4">
+        <h2
+          className="
+            text-5xl
+            font-black
+            mt-1
+            bg-clip-text
+            text-transparent
+          "
+          style={{
+            backgroundImage:
+              'linear-gradient(90deg,#ff1744,#ff9100,#ffee00,#00e676,#00b0ff,#7c4dff,#ff1493)'
+          }}
+        >
+          ${todaySales}
+        </h2>
 
-          <div>
 
-            <p className="text-zinc-400">
-              Cliente
-            </p>
-
-            <h2 className="text-3xl font-black text-green-400">
-
-              {
-
-                selectedTable
-                ? `#${selectedTable.number}`
-                : 'Ninguno'
-
-              }
-
-            </h2>
-
-          </div>
+        <div className="
+          flex
+          flex-wrap
+          justify-center
+          gap-3
+          mt-4
+        ">
 
           <button
-
-            onClick={()=>
-              supabase.auth.signOut()
-            }
-
-            className="bg-red-500 hover:bg-red-600 px-5 py-3 rounded-2xl font-black"
-
+            onClick={closeDay}
+            className="
+              bg-gradient-to-r
+              from-red-600
+              to-pink-600
+              px-5
+              py-3
+              rounded-xl
+              font-black
+              hover:scale-105
+              transition
+              shadow-[0_0_20px_rgba(255,0,80,0.35)]
+            "
           >
+            Cerrar Día
+          </button>
 
-            Salir
 
+          <button
+            onClick={() =>
+              setShowHistory(prev => !prev)
+            }
+            className="
+              bg-gradient-to-r
+              from-fuchsia-600
+              to-purple-700
+              px-5
+              py-3
+              rounded-xl
+              font-black
+              hover:scale-105
+              transition
+              shadow-[0_0_20px_rgba(220,0,255,0.35)]
+            "
+          >
+            {showHistory ? 'Ocultar Historial' : 'Ver Historial'}
           </button>
 
         </div>
 
       </div>
 
-{
-  showHistory && (
 
-    <div className="
-      p-6
-      border-b
-      border-zinc-800
-      bg-zinc-950
-    ">
+      {/* CLIENTE / SALIR */}
 
       <div className="
         flex
-        flex-col
-        md:flex-row
-        md:items-end
-        gap-4
+        items-center
+        gap-5
+        justify-center
       ">
 
-        <div>
+        <div className="text-right">
 
-          <label className="
-            block
+          <p className="
             text-zinc-400
-            mb-2
-            font-bold
+            uppercase
+            tracking-wide
+            text-sm
           ">
-            Seleccionar fecha
-          </label>
+            Cliente
+          </p>
 
-          <input
+          <h2
+            className="
+              text-3xl
+              font-black
+              bg-clip-text
+              text-transparent
+            "
+            style={{
+              backgroundImage:
+                'linear-gradient(90deg,#00ff88,#00d9ff,#ff2bd6)'
+            }}
+          >
 
-            type="date"
-
-            value={historyDate}
-
-            onChange={(e) =>
-              setHistoryDate(
-                e.target.value
-              )
+            {
+              selectedTable
+                ? `#${selectedTable.number}`
+                : 'Ninguno'
             }
 
-            className="
-              bg-zinc-900
-              border
-              border-zinc-700
-              rounded-xl
-              px-4
-              py-3
-              text-white
-            "
-
-          />
+          </h2>
 
         </div>
 
 
         <button
-
           onClick={() =>
-            fetchSalesByDate(
-              historyDate
-            )
+            supabase.auth.signOut()
           }
-
-          disabled={loadingHistory}
-
           className="
-            bg-pink-600
-            px-6
+            bg-red-500
+            hover:bg-red-600
+            px-5
             py-3
-            rounded-xl
+            rounded-2xl
             font-black
-            disabled:opacity-50
+            shadow-[0_0_16px_rgba(255,30,60,0.25)]
           "
-
         >
-
-          {
-            loadingHistory
-              ? 'Buscando...'
-              : 'Consultar Ventas'
-          }
-
+          Salir
         </button>
-
-
-        <div className="md:ml-auto">
-
-          <p className="text-zinc-400">
-            Total de la fecha
-          </p>
-
-          <h2 className="
-            text-4xl
-            font-black
-            text-green-400
-          ">
-
-            ${historyTotal}
-
-          </h2>
-
-        </div>
-
-      </div>
-
-
-      <div className="mt-6">
-
-        {
-          historySales.length === 0
-          ? (
-
-            <p className="text-zinc-500">
-
-              No hay ventas para esta fecha.
-
-            </p>
-
-          )
-          : (
-
-            <div className="space-y-3">
-
-              {
-                historySales.map(
-                  venta => (
-
-                    <div
-
-                      key={venta.id}
-
-                      className="
-                        bg-zinc-900
-                        rounded-xl
-                        p-4
-                        flex
-                        flex-col
-                        md:flex-row
-                        md:items-center
-                        md:justify-between
-                        gap-3
-                      "
-
-                    >
-
-                      <div>
-
-                        <p className="
-                          text-xl
-                          font-black
-                        ">
-
-                          Cliente #
-                          {venta.table_number}
-
-                        </p>
-
-                        <p className="
-                          text-zinc-400
-                        ">
-
-                          {
-                            new Date(
-                              venta.created_at
-                            )
-                            .toLocaleTimeString(
-                              'es-MX',
-                              {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }
-                            )
-                          }
-
-                        </p>
-
-                      </div>
-
-
-                      <div>
-
-                        <p className="
-                          text-zinc-400
-                        ">
-                          Método
-                        </p>
-
-                        <div>
-
-  <p className="text-zinc-400">
-    Método
-  </p>
-
-  <p className="font-bold">
-    {venta.payment_method || 'Sin especificar'}
-  </p>
-
-</div>
-
-                      </div>
-
-
-                      <div className="
-                        text-2xl
-                        font-black
-                        text-green-400
-                      ">
-
-                        ${venta.total}
-
-                      </div>
-
-                    </div>
-
-                  )
-                )
-              }
-
-            </div>
-
-          )
-        }
 
       </div>
 
     </div>
 
-  )
-}
 
-      <div className="grid grid-cols-1 md:grid-cols-2">
+    {/* ========================================= */}
+    {/* HISTORIAL */}
+    {/* ========================================= */}
 
-        {/* CLIENTES */}
+    {
+      showHistory && (
 
-        <div className="p-6 border-r border-zinc-800">
+        <div
+          className="
+            p-6
+            border-b
+            border-fuchsia-500/30
+            bg-zinc-950
+          "
+        >
 
-          <h2 className="text-4xl font-black mb-5">
+          <div
+            className="
+              flex
+              flex-col
+              md:flex-row
+              md:items-end
+              gap-4
+            "
+          >
 
-            Clientes
+            <div>
 
-          </h2>
+              <label className="
+                block
+                text-zinc-400
+                mb-2
+                font-bold
+              ">
+                Seleccionar fecha
+              </label>
 
-          <div className="grid grid-cols-3 gap-3 h-[80vh] overflow-y-scroll">
+              <input
+                type="date"
+                value={historyDate}
+                onChange={(e) =>
+                  setHistoryDate(e.target.value)
+                }
+                className="
+                  bg-black
+                  border
+                  border-fuchsia-500/30
+                  rounded-xl
+                  px-4
+                  py-3
+                  text-white
+                "
+              />
+
+            </div>
+
+
+            <button
+              onClick={() =>
+                fetchSalesByDate(historyDate)
+              }
+              disabled={loadingHistory}
+              className="
+                bg-gradient-to-r
+                from-fuchsia-600
+                to-purple-700
+                px-6
+                py-3
+                rounded-xl
+                font-black
+                disabled:opacity-50
+              "
+            >
+
+              {
+                loadingHistory
+                  ? 'Buscando...'
+                  : 'Consultar Ventas'
+              }
+
+            </button>
+
+
+            <div className="md:ml-auto">
+
+              <p className="text-zinc-400">
+                Total de la fecha
+              </p>
+
+              <h2
+                className="
+                  text-4xl
+                  font-black
+                  bg-clip-text
+                  text-transparent
+                "
+                style={{
+                  backgroundImage:
+                    'linear-gradient(90deg,#00ff88,#00d9ff,#ff2bd6)'
+                }}
+              >
+                ${historyTotal}
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div className="mt-6">
 
             {
+              historySales.length === 0
+                ? (
 
-              tables.map(table=>(
-
-                <button
-
-                  key={table.id}
-
-                  onClick={()=>
-                    setSelectedTableId(table.id)
-                  }
-
-                  className={`p-5 rounded-2xl border transition-all duration-200 shadow-md
-
-${
-  selectedTable?.id === table.id
-    ? 'bg-gradient-to-r from-fuchsia-700 to-pink-600 border-fuchsia-400 shadow-[0_0_20px_rgba(255,0,180,0.35)]'
-    : table.paid
-    ? 'bg-gradient-to-r from-emerald-700 to-lime-600 border-emerald-300 shadow-[0_0_20px_rgba(0,255,150,0.25)]'
-    : 'bg-zinc-900 border-fuchsia-500/20 hover:border-fuchsia-400/50 hover:bg-zinc-800'
-}
-`}
-
-                >
-
-                  <h3 className="text-2xl font-black">
-
-                    #{table.number}
-
-                  </h3>
-
-                  <p>
-
-                    ${
-                      getTotal(table.items)
-                    }
-
+                  <p className="text-zinc-500">
+                    No hay ventas para esta fecha.
                   </p>
 
-                </button>
+                )
+                : (
 
-              ))
+                  <div className="space-y-3">
 
+                    {
+                      historySales.map(
+                        venta => (
+
+                          <div
+                            key={venta.id}
+                            className="
+                              bg-black
+                              border
+                              border-fuchsia-500/20
+                              rounded-xl
+                              p-4
+                              flex
+                              flex-col
+                              md:flex-row
+                              md:items-center
+                              md:justify-between
+                              gap-3
+                            "
+                          >
+
+                            <div>
+
+                              <p className="
+                                text-xl
+                                font-black
+                              ">
+                                Cliente #{venta.table_number}
+                              </p>
+
+                              <p className="
+                                text-zinc-400
+                                text-sm
+                              ">
+
+                                {
+                                  new Date(
+                                    venta.created_at
+                                  ).toLocaleString(
+                                    'es-MX',
+                                    {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    }
+                                  )
+                                }
+
+                              </p>
+
+                            </div>
+
+
+                            <div>
+
+                              <p className="
+                                text-zinc-500
+                                text-sm
+                              ">
+                                Método
+                              </p>
+
+                              <p className="font-bold">
+                                {
+                                  venta.payment_method ||
+                                  'Sin especificar'
+                                }
+                              </p>
+
+                            </div>
+
+
+                            <div
+                              className="
+                                text-3xl
+                                font-black
+                                bg-clip-text
+                                text-transparent
+                              "
+                              style={{
+                                backgroundImage:
+                                  'linear-gradient(90deg,#00ff88,#00d9ff)'
+                              }}
+                            >
+                              ${venta.total}
+                            </div>
+
+                          </div>
+
+                        )
+                      )
+                    }
+
+                  </div>
+
+                )
             }
 
           </div>
 
         </div>
 
-        {/* PRODUCTOS */}
-
-        <div className="p-6">
-
-          {
-
-            !selectedTable && (
-
-              <div className="h-full flex items-center justify-center">
-
-                <h2 className="text-5xl font-black text-pink-500">
-
-                  Selecciona Cliente
-
-                </h2>
-
-              </div>
-
-            )
-
-          }
-
-          {
-
-            selectedTable && (
-
-              <>
-
-                <div className="flex justify-between items-center mb-6">
-
-                  <h2 className="text-4xl font-black text-pink-500">
-
-                    Cliente #{selectedTable.number}
-
-                  </h2>
-
-                  <h2 className="text-4xl font-black text-green-400">
-
-                    ${
-                      getTotal(selectedTable?.items || [])
-                    }
-
-                  </h2>
-
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-
-                  {
-
-                    products.map(product=>(
-
-                      <button
-
-                        key={product.id}
-
-                        onClick={()=>
-                          addProduct(product)
-                        }
-
-                        className="bg-zinc-900 border border-fuchsia-500/20 p-5 rounded-2xl hover:bg-gradient-to-r hover:from-fuchsia-700 hover:via-pink-600 hover:to-purple-700 hover:border-fuchsia-300 transition-all duration-200 shadow-[0_0_10px_rgba(255,0,160,0.08)]"
-
-                      >
-
-                        <h3 className="text-2xl font-black">
-
-                          {product.name}
-
-                        </h3>
-
-                        <p className="text-pink-400">
-
-                          ${product.price}
-
-                        </p>
-
-                      </button>
-
-                    ))
-
-                  }
-
-                </div>
-
-                <div className="mt-8 bg-zinc-950 border border-fuchsia-500/20 p-5 rounded-2xl shadow-[0_0_25px_rgba(255,0,150,0.08)]">
-
-                  <h2 className="text-3xl font-black mb-5">
-
-                    Consumo
-
-                  </h2>
-
-                  <div className="space-y-3">
-
-                    {
-
-                      (selectedTable?.items || []).map(
-                        (item,index)=>(
-
-                          <div
-
-                            key={index}
-
-                            className="flex justify-between bg-black p-4 rounded-xl"
-
-                          >
-
-                            <div>
-
-  <p className="font-bold">
-    {item.name}
-  </p>
-
-  <p className="text-pink-400">
-    ${item.price}
-  </p>
-
-  {
-    item.added_at ? (
-
-      <p className="text-zinc-400 text-sm mt-1">
-
-        {
-          new Date(item.added_at)
-            .toLocaleString(
-              'es-MX',
-              {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }
-            )
-        }
-
-      </p>
-
-    ) : (
-
-      <p className="text-zinc-600 text-xs mt-1">
-        Sin horario registrado
-      </p>
-
-    )
-  }
-
-</div>
-
-                            <button
-
-                              onClick={()=>
-                                removeProduct(index)
-                              }
-
-                              className="bg-red-500 px-4 rounded-xl"
-
-                            >
-
-                              X
-
-                            </button>
-
-                          </div>
-
-                        )
-
-                      )
-
-                    }
-
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3 mt-6">
-
-                    <button
-                   onClick={() => payTable('Efectivo')}
-                   disabled={isPaying || selectedTable?.paid}
-                   className="bg-green-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
-                     >
-                  {isPaying ? 'Cobrando...' : 'Efectivo'}
-                 </button>
-
-                  <button
-                  onClick={() => payTable('Tarjeta')}
-                       disabled={isPaying || selectedTable?.paid}
-                          className="bg-blue-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                                {isPaying ? 'Cobrando...' : 'Tarjeta'}
-
-                              </button>
-
-                             <button
-                            onClick={() => payTable('Transferencia')}
-                           disabled={isPaying || selectedTable?.paid}
-                             className="bg-purple-500 py-4 rounded-2xl font-black disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                            {isPaying ? 'Cobrando...' : 'Transferencia'}
-                             </button>
-
-                  </div>
-
-                  {
-  selectedTable?.paid && (
-
-    <div className="mt-10 flex flex-col items-center">
-
-      {
-        showQR && (
-          <>
-            <div
-              ref={qrRef}
-              className="bg-black p-6 rounded-2xl border border-pink-500"
-            >
-
-              <QRCodeSVG
-                value={qrData}
-                size={250}
-                bgColor="#000"
-                fgColor="#fff"
-              />
-
-            </div>
-
-            <button
-              onClick={downloadQR}
-              className="mt-5 bg-pink-500 px-6 py-3 rounded-2xl font-black"
-            >
-              Descargar QR
-            </button>
-          </>
-        )
-      }
-
-      <button
-        onClick={resetTable}
-        className="mt-3 bg-red-500 px-6 py-3 rounded-2xl font-black"
+      )
+    }
+
+
+    {/* ========================================= */}
+    {/* CONTENIDO PRINCIPAL */}
+    {/* ========================================= */}
+
+    <div className="
+      grid
+      grid-cols-1
+      md:grid-cols-2
+    ">
+
+
+      {/* ======================================= */}
+      {/* CLIENTES */}
+      {/* ======================================= */}
+
+      <div
+        className="
+          p-6
+          border-r
+          border-fuchsia-500/20
+        "
       >
-        Liberar Cliente
-      </button>
 
-    </div>
+        <h2
+          className="
+            text-4xl
+            font-black
+            mb-5
+            bg-clip-text
+            text-transparent
+          "
+          style={{
+            backgroundImage:
+              'linear-gradient(90deg,#ff1744,#ff9100,#ffee00,#00e676,#00b0ff,#ff1493)'
+          }}
+        >
+          Clientes
+        </h2>
 
-  )
-}
 
-                </div>
+        <div
+          className="
+            grid
+            grid-cols-3
+            gap-3
+            h-[80vh]
+            overflow-y-scroll
+            pr-2
+          "
+        >
 
-              </>
+          {
+            tables.map(table => (
 
-            )
+              <button
+                key={table.id}
+                onClick={() =>
+                  setSelectedTableId(table.id)
+                }
 
+                className={`
+                  p-5
+                  rounded-2xl
+                  border
+                  transition-all
+                  duration-200
+
+                  ${
+                    selectedTable?.id === table.id
+
+                      ? `
+                        bg-gradient-to-br
+                        from-fuchsia-700
+                        via-pink-600
+                        to-purple-800
+                        border-fuchsia-300
+                        shadow-[0_0_25px_rgba(255,0,180,0.38)]
+                        scale-[1.02]
+                      `
+
+                      : table.paid
+
+                      ? `
+                        bg-gradient-to-br
+                        from-green-700
+                        to-emerald-900
+                        border-green-400
+                        shadow-[0_0_20px_rgba(0,255,120,0.25)]
+                      `
+
+                      : `
+                        bg-zinc-900
+                        border-fuchsia-500/15
+                        hover:border-fuchsia-400/60
+                        hover:bg-zinc-800
+                        hover:shadow-[0_0_15px_rgba(255,0,180,0.15)]
+                      `
+                  }
+                `}
+              >
+
+                <h3 className="
+                  text-2xl
+                  font-black
+                ">
+                  #{table.number}
+                </h3>
+
+                <p className="
+                  text-zinc-300
+                  mt-1
+                ">
+                  ${getTotal(table.items)}
+                </p>
+
+              </button>
+
+            ))
           }
 
         </div>
 
       </div>
 
+
+      {/* ======================================= */}
+      {/* PRODUCTOS */}
+      {/* ======================================= */}
+
+      <div className="p-6">
+
+
+        {/* SIN CLIENTE SELECCIONADO */}
+
+        {
+          !selectedTable && (
+
+            <div
+              className="
+                min-h-[75vh]
+                flex
+                flex-col
+                items-center
+                justify-center
+                text-center
+                px-6
+              "
+            >
+
+              <div
+                className="
+                  relative
+                  max-w-[520px]
+                  w-full
+                "
+              >
+
+                <div
+                  className="
+                    absolute
+                    inset-10
+                    bg-fuchsia-600/20
+                    blur-[80px]
+                    rounded-full
+                  "
+                />
+
+                <img
+                  src={hellfireLogo}
+                  alt="HELLFIRE"
+                  className="
+                    relative
+                    w-full
+                    max-h-[480px]
+                    object-contain
+                    drop-shadow-[0_0_35px_rgba(255,0,180,0.4)]
+                  "
+                />
+
+              </div>
+
+
+              <h2
+                className="
+                  text-5xl
+                  font-black
+                  mt-2
+                  bg-clip-text
+                  text-transparent
+                "
+                style={{
+                  backgroundImage:
+                    'linear-gradient(90deg,#ff1744,#ff9100,#ffee00,#00e676,#00b0ff,#7c4dff,#ff1493)'
+                }}
+              >
+                Selecciona Cliente
+              </h2>
+
+
+              <p className="
+                text-zinc-500
+                mt-3
+                tracking-[0.25em]
+                font-bold
+              ">
+                HELLFIRE POS
+              </p>
+
+            </div>
+
+          )
+        }
+
+
+        {/* CLIENTE SELECCIONADO */}
+
+        {
+          selectedTable && (
+
+            <>
+
+              <div
+                className="
+                  flex
+                  justify-between
+                  items-center
+                  mb-6
+                  gap-4
+                "
+              >
+
+                <h2
+                  className="
+                    text-4xl
+                    font-black
+                    bg-clip-text
+                    text-transparent
+                  "
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(90deg,#ff1493,#b721ff,#21d4fd)'
+                  }}
+                >
+                  Cliente #{selectedTable.number}
+                </h2>
+
+
+                <h2
+                  className="
+                    text-4xl
+                    font-black
+                    bg-clip-text
+                    text-transparent
+                  "
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(90deg,#00ff88,#ffee00)'
+                  }}
+                >
+                  ${getTotal(selectedTable?.items || [])}
+                </h2>
+
+              </div>
+
+
+              {/* PRODUCTOS */}
+
+              <div className="
+                grid
+                grid-cols-2
+                gap-4
+              ">
+
+                {
+                  products.map(product => (
+
+                    <button
+                      key={product.id}
+
+                      onClick={() =>
+                        addProduct(product)
+                      }
+
+                      disabled={selectedTable?.paid}
+
+                      className="
+                        bg-zinc-900
+                        border
+                        border-fuchsia-500/20
+                        p-5
+                        rounded-2xl
+                        transition-all
+                        duration-200
+                        hover:border-fuchsia-400
+                        hover:bg-gradient-to-br
+                        hover:from-fuchsia-800
+                        hover:via-pink-700
+                        hover:to-purple-800
+                        hover:shadow-[0_0_22px_rgba(255,0,180,0.22)]
+                        disabled:opacity-40
+                        disabled:cursor-not-allowed
+                      "
+                    >
+
+                      <h3 className="
+                        text-2xl
+                        font-black
+                      ">
+                        {product.name}
+                      </h3>
+
+                      <p className="
+                        text-pink-400
+                        mt-1
+                      ">
+                        ${product.price}
+                      </p>
+
+                    </button>
+
+                  ))
+                }
+
+              </div>
+
+
+              {/* ================================= */}
+              {/* CONSUMO */}
+              {/* ================================= */}
+
+              <div
+                className="
+                  mt-8
+                  bg-zinc-950
+                  border
+                  border-fuchsia-500/25
+                  p-5
+                  rounded-2xl
+                  shadow-[0_0_30px_rgba(255,0,160,0.08)]
+                "
+              >
+
+                <h2
+                  className="
+                    text-3xl
+                    font-black
+                    mb-5
+                    bg-clip-text
+                    text-transparent
+                  "
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(90deg,#ff1744,#ff9100,#ffee00,#00e676,#00b0ff,#ff1493)'
+                  }}
+                >
+                  Consumo
+                </h2>
+
+
+                <div className="space-y-3">
+
+                  {
+                    (selectedTable?.items || []).map(
+                      (item,index) => (
+
+                        <div
+                          key={index}
+                          className="
+                            flex
+                            justify-between
+                            items-center
+                            bg-black
+                            border
+                            border-fuchsia-500/15
+                            p-4
+                            rounded-xl
+                          "
+                        >
+
+                          <div>
+
+                            <p className="
+                              font-black
+                              text-lg
+                            ">
+                              {item.name}
+                            </p>
+
+                            <p className="
+                              text-pink-400
+                              font-bold
+                            ">
+                              ${item.price}
+                            </p>
+
+
+                            {
+                              item.added_at ? (
+
+                                <p className="
+                                  text-zinc-400
+                                  text-sm
+                                  mt-1
+                                ">
+
+                                  Agregado:{' '}
+
+                                  {
+                                    new Date(
+                                      item.added_at
+                                    ).toLocaleString(
+                                      'es-MX',
+                                      {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      }
+                                    )
+                                  }
+
+                                </p>
+
+                              ) : (
+
+                                <p className="
+                                  text-zinc-600
+                                  text-xs
+                                  mt-1
+                                ">
+                                  Sin horario registrado
+                                </p>
+
+                              )
+                            }
+
+                          </div>
+
+
+                          <button
+                            onClick={() =>
+                              removeProduct(index)
+                            }
+                            disabled={selectedTable?.paid}
+                            className="
+                              bg-red-500
+                              hover:bg-red-600
+                              px-5
+                              py-3
+                              rounded-xl
+                              font-black
+                              disabled:opacity-40
+                              disabled:cursor-not-allowed
+                            "
+                          >
+                            X
+                          </button>
+
+                        </div>
+
+                      )
+                    )
+                  }
+
+                </div>
+
+
+                {/* ================================= */}
+                {/* MÉTODOS DE PAGO */}
+                {/* ================================= */}
+
+                <div className="
+                  grid
+                  grid-cols-3
+                  gap-3
+                  mt-6
+                ">
+
+                  <button
+                    onClick={() =>
+                      payTable('Efectivo')
+                    }
+                    disabled={
+                      isPaying ||
+                      selectedTable?.paid
+                    }
+                    className="
+                      bg-gradient-to-r
+                      from-green-600
+                      to-emerald-500
+                      py-4
+                      rounded-2xl
+                      font-black
+                      disabled:opacity-50
+                      disabled:cursor-not-allowed
+                      hover:shadow-[0_0_20px_rgba(0,255,130,0.25)]
+                    "
+                  >
+                    {
+                      isPaying
+                        ? 'Cobrando...'
+                        : 'Efectivo'
+                    }
+                  </button>
+
+
+                  <button
+                    onClick={() =>
+                      payTable('Tarjeta')
+                    }
+                    disabled={
+                      isPaying ||
+                      selectedTable?.paid
+                    }
+                    className="
+                      bg-gradient-to-r
+                      from-blue-600
+                      to-cyan-500
+                      py-4
+                      rounded-2xl
+                      font-black
+                      disabled:opacity-50
+                      disabled:cursor-not-allowed
+                      hover:shadow-[0_0_20px_rgba(0,180,255,0.25)]
+                    "
+                  >
+                    {
+                      isPaying
+                        ? 'Cobrando...'
+                        : 'Tarjeta'
+                    }
+                  </button>
+
+
+                  <button
+                    onClick={() =>
+                      payTable('Transferencia')
+                    }
+                    disabled={
+                      isPaying ||
+                      selectedTable?.paid
+                    }
+                    className="
+                      bg-gradient-to-r
+                      from-purple-600
+                      to-fuchsia-500
+                      py-4
+                      rounded-2xl
+                      font-black
+                      disabled:opacity-50
+                      disabled:cursor-not-allowed
+                      hover:shadow-[0_0_20px_rgba(220,0,255,0.3)]
+                    "
+                  >
+                    {
+                      isPaying
+                        ? 'Cobrando...'
+                        : 'Transferencia'
+                    }
+                  </button>
+
+                </div>
+
+
+                {/* ================================= */}
+                {/* PAGADO / QR / LIBERAR */}
+                {/* ================================= */}
+
+                {
+                  selectedTable?.paid && (
+
+                    <div className="
+                      mt-10
+                      flex
+                      flex-col
+                      items-center
+                    ">
+
+                      {
+                        showQR && (
+
+                          <>
+
+                            <div
+                              ref={qrRef}
+                              className="
+                                bg-black
+                                p-6
+                                rounded-2xl
+                                border
+                                border-fuchsia-500
+                                shadow-[0_0_25px_rgba(255,0,180,0.3)]
+                              "
+                            >
+
+                              <QRCodeSVG
+                                value={qrData}
+                                size={250}
+                                bgColor="#000"
+                                fgColor="#fff"
+                              />
+
+                            </div>
+
+
+                            <button
+                              onClick={downloadQR}
+                              className="
+                                mt-5
+                                bg-gradient-to-r
+                                from-fuchsia-600
+                                to-purple-700
+                                px-6
+                                py-3
+                                rounded-2xl
+                                font-black
+                              "
+                            >
+                              Descargar QR
+                            </button>
+
+                          </>
+
+                        )
+                      }
+
+
+                      <button
+                        onClick={resetTable}
+                        className="
+                          mt-3
+                          bg-red-500
+                          hover:bg-red-600
+                          px-6
+                          py-3
+                          rounded-2xl
+                          font-black
+                        "
+                      >
+                        Liberar Cliente
+                      </button>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+            </>
+
+          )
+        }
+
+      </div>
+
     </div>
 
-  ) 
+  </div>
+
+) 
 }
