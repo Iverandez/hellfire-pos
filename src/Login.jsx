@@ -174,7 +174,7 @@ export default function Login(){
             uppercase
             tracking-[0.2em]
           ">
-            Acceso al sistema
+            Sistema
           </p>
 
         </div>
