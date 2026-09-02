@@ -12,7 +12,7 @@ function getTotal(items){
   if(!items) return 0
 
   return items.reduce(
-    (sum,item)=>sum + Number(item.price || 0),
+    (sum,item)=>sum + Number(item.price || 0), 0
     
   )
 
