@@ -9,11 +9,14 @@ export default function App() {
 
 function getTotal(items){
 
-  if(!items) return 0
+  if(!Array.isArray(items) || items.length === 0){
+    return 0
+  }
 
   return items.reduce(
-    (sum,item)=>sum + Number(item.price || 0), 0
-    
+    (sum, item) =>
+      sum + Number(item?.price || 0),
+    0
   )
 
 }
