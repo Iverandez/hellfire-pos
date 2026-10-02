@@ -744,7 +744,7 @@ PAGADO
 
         <img
           src={hellfireLogo}
-          alt="HELLFIRE"
+          alt="THE HELLFIRE CLUB"
           className="
             h-24
             md:h-28
