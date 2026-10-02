@@ -1307,7 +1307,7 @@ PAGADO
 
                 <img
                   src={hellfireLogo}
-                  alt="HELLFIRE"
+                  alt="THE HELLFIRE CLUB"
                   className="
                     relative
                     w-full
